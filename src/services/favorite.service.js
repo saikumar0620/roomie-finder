@@ -3,37 +3,37 @@ import { Query, Permission, Role } from "appwrite";
 
 // Get user's favorites
 export const getFavorites = async (userId) => {
-  const res = await databases.listRows({
-    databaseId: DATABASE_ID,
-    tableId: COL_FAVORITES,
-    queries: [Query.equal("userId", userId)],
-  });
-  return res.rows;
+  const res = await databases.listDocuments(
+    DATABASE_ID,
+    COL_FAVORITES,
+    [Query.equal("userId", userId)]
+  );
+  return res.documents;
 };
 
 // Add favorite
 export const addFavorite = async (userId, listingId) => {
-  return await databases.createRow({
-    databaseId: DATABASE_ID,
-    tableId: COL_FAVORITES,
-    rowId: ID.unique(),
-    data: {
+  return await databases.createDocument(
+    DATABASE_ID,
+    COL_FAVORITES,
+    ID.unique(),
+    {
       userId,
       listingId,
     },
-    permissions: [
+    [
       Permission.read(Role.user(userId)),
       Permission.update(Role.user(userId)),
       Permission.delete(Role.user(userId)),
     ]
-  });
+  );
 };
 
 // Remove favorite
 export const removeFavorite = async (docId) => {
-  return await databases.deleteRow({
-    databaseId: DATABASE_ID,
-    tableId: COL_FAVORITES,
-    rowId: docId,
-  });
+  return await databases.deleteDocument(
+    DATABASE_ID,
+    COL_FAVORITES,
+    docId
+  );
 };
