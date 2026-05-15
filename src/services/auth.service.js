@@ -5,6 +5,7 @@ export const signup = async (email, password, name) => {
 };
 
 export const login = async (email, password) => {
+  await account.deleteSession({ sessionId: "current" });
   return await account.createEmailPasswordSession({ email, password });
 };
 

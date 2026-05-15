@@ -6,6 +6,9 @@ client
   .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
   .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
 
+  console.log( import.meta.env.VITE_APPWRITE_ENDPOINT,);
+  console.log( import.meta.env.VITE_APPWRITE_PROJECT_ID,);
+
 export const account = new Account(client);
 export const databases = new TablesDB(client);
 export const storage = new Storage(client);
