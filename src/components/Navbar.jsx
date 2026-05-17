@@ -80,6 +80,9 @@ export default function Navbar() {
                 <Link to="/inbox" className="btn btn-ghost" style={{ textDecoration: "none", ...linkStyle }}>
                   Inbox
                 </Link>
+                <Link to="/expenses" className="btn btn-ghost" style={{ textDecoration: "none", ...linkStyle }}>
+                  Expenses
+                </Link>
                 <Link to="/profile" style={{ textDecoration: "none" }}>
                   <div style={{
                     width: 34, height: 34, borderRadius: "50%",

@@ -18,5 +18,8 @@ export const COL_FAVORITES = import.meta.env.VITE_COLLECTION_FAVORITES;
 export const COL_CONVERSATIONS = import.meta.env.VITE_COLLECTION_CONVERSATIONS;
 export const COL_MESSAGES = import.meta.env.VITE_COLLECTION_MESSAGES;
 export const COL_PROFILES = import.meta.env.VITE_COLLECTION_PROFILES;
+export const COL_EXPENSES = import.meta.env.VITE_COLLECTION_EXPENSES || "expenses";
+export const COL_EXPENSE_SHARES = import.meta.env.VITE_COLLECTION_EXPENSE_SHARES || "expense_shares";
+export const COL_RECURRING_BILLS = import.meta.env.VITE_COLLECTION_RECURRING_BILLS || "recurring_bills";
 
 export { ID };

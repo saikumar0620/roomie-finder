@@ -11,6 +11,7 @@ import ProtectedRoute from "../routes/ProtectedRoute";
 import ListingDetails from "../pages/ListingDetails";
 import Inbox from "../pages/Inbox";
 import Chat from "../pages/Chat";
+import ExpenseDashboard from "../pages/Expenses/ExpenseDashboard";
 
 export default function AppRoutes() {
   return (
@@ -56,6 +57,14 @@ export default function AppRoutes() {
       <Route path="/listing/:id" element={<ListingDetails />} />
       <Route path="/inbox" element={<Inbox />} />
       <Route path="/chat/:id" element={<Chat />} />
+      <Route
+        path="/expenses"
+        element={
+          <ProtectedRoute>
+            <ExpenseDashboard />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
