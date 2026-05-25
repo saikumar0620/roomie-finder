@@ -5,7 +5,21 @@ export const signup = async (email, password, name) => {
 };
 
 export const login = async (email, password) => {
-  return await account.createEmailPasswordSession({ email, password });
+  try {
+    // Appwrite SDK expects positional arguments
+    return await account.createEmailPasswordSession(email, password);
+  } catch (error) {
+    // If a session is already active, delete the stuck session and try again seamlessly
+    if (
+      error?.message?.includes(
+        "Creation of a session is prohibited when a session is active",
+      )
+    ) {
+      await account.deleteSession("current");
+      return await account.createEmailPasswordSession(email, password);
+    }
+    throw error;
+  }
 };
 
 export const logout = async () => {
