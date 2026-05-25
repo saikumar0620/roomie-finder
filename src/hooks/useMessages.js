@@ -15,31 +15,45 @@ export const useMessages = (conversationId) => {
   useEffect(() => {
     if (!conversationId) return;
 
+    let isMounted = true;
+    let unsubscribe;
     // Subscribe to all changes in the messages collection
     const channel = `databases.${DATABASE_ID}.collections.${COL_MESSAGES}.documents`;
-    
-    const unsubscribe = client.subscribe(channel, (response) => {
-      // Check if the event is a creation
-      if (
-        response.events.includes("databases.*.collections.*.documents.*.create") ||
-        response.events.some(e => e.includes(".create"))
-      ) {
-        const newMessage = response.payload;
-        
-        // Only append if it belongs to the current conversation
-        if (newMessage.conversationId === conversationId) {
-          queryClient.setQueryData(["messages", conversationId], (oldData) => {
-            if (!oldData) return [newMessage];
-            // Prevent duplicates
-            if (oldData.some(m => m.$id === newMessage.$id)) return oldData;
-            return [...oldData, newMessage];
-          });
+
+    const timeoutId = setTimeout(() => {
+      if (!isMounted) return;
+
+      unsubscribe = client.subscribe(channel, (response) => {
+        // Check if the event is a creation
+        if (
+          response.events.includes(
+            "databases.*.collections.*.documents.*.create",
+          ) ||
+          response.events.some((e) => e.includes(".create"))
+        ) {
+          const newMessage = response.payload;
+
+          // Only append if it belongs to the current conversation
+          if (newMessage.conversationId === conversationId) {
+            queryClient.setQueryData(
+              ["messages", conversationId],
+              (oldData) => {
+                if (!oldData) return [newMessage];
+                // Prevent duplicates
+                if (oldData.some((m) => m.$id === newMessage.$id))
+                  return oldData;
+                return [...oldData, newMessage];
+              },
+            );
+          }
         }
-      }
-    });
+      });
+    }, 100);
 
     return () => {
-      unsubscribe();
+      isMounted = false;
+      clearTimeout(timeoutId);
+      if (unsubscribe) unsubscribe();
     };
   }, [conversationId, queryClient]);
 

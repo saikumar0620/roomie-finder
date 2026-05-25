@@ -14,12 +14,9 @@ if (localStorage.getItem("theme") === "dark") {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-   {/* Wrap your application with ThemeProvider */}
-      <QueryClientProvider client={queryClient}>
-        <App />
-        <Toaster position="top-right" reverseOrder={false} />
-      </QueryClientProvider>
-    
-  </React.StrictMode>
+  // Wrap your application with ThemeProvider
+  <QueryClientProvider client={queryClient}>
+    <App />
+    <Toaster position="top-right" reverseOrder={false} />
+  </QueryClientProvider>
 );
