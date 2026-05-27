@@ -35,6 +35,12 @@ export const upsertProfile = async (userId, data, existingDocId) => {
 };
 
 export const uploadAvatar = async (file) => {
+  const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+  const fileExtension = file.name.split('.').pop().toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(fileExtension)) {
+    throw new Error(`The file extension .${fileExtension} is not allowed. Please upload a ${ALLOWED_EXTENSIONS.join(', ')} file.`);
+  }
+
   const res = await storage.createFile({
     bucketId: BUCKET_ID,
     fileId: ID.unique(),
