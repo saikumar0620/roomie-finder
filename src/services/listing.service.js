@@ -10,7 +10,7 @@ import { Query, Permission, Role } from "appwrite";
 
 export const uploadImages = async (files) => {
   const uploaded = [];
-  const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp"];
+  const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png"];
 
   for (const file of files) {
     const fileExtension = file.name.split(".").pop().toLowerCase();
