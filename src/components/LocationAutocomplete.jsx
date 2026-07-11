@@ -45,8 +45,8 @@ export default function LocationAutocomplete({ value, onChange, placeholder = "e
       fetchSuggestions(val);
     }, 500);
   };
-
-  const handleSelect = (suggestion) => {
+ 
+   const handleSelect = (suggestion) => {
     // Format a nice display name: city, state
     const { address } = suggestion;
     let displayName = suggestion.display_name.split(",")[0]; // Fallback to first part
