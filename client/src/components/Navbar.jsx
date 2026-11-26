@@ -2,16 +2,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useThemeStore } from "../store/useThemeStore";
+
 export default function Navbar() {
   const { user, logoutUser } = useAuthStore();
   const { darkMode, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const confirmLogout = async () => {
     await logoutUser();
     setShowLogoutConfirm(false);
+    setMobileMenuOpen(false);
     navigate("/login");
   };
 
@@ -28,46 +31,89 @@ export default function Navbar() {
   return (
     <nav
       className="glass"
-      style={{ position: "sticky", top: 0, zIndex: 50 }}
+      style={{ position: "sticky", top: 0, zIndex: 50, width: "100%" }}
     >
       <div className="wrap">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
-          {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-            <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{
-                width: 34, height: 34,
-                background: "linear-gradient(135deg, var(--p), var(--acc))",
-                borderRadius: 10,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 16, boxShadow: "0 4px 12px var(--p-glow)",
-                border: "1px solid rgba(255,255,255,0.2)"
-              }}>🏠</div>
-              <span className="grad-text" style={{ fontWeight: 700, fontSize: "1rem", letterSpacing: "-0.03em" }}>
+        <div className="flex items-center justify-between h-[60px] gap-2">
+          {/* Logo + Find Roommates */}
+          <div className="flex items-center gap-4 min-w-0">
+            <Link
+              to="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 shrink-0 no-underline"
+            >
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  background: "linear-gradient(135deg, var(--p), var(--acc))",
+                  borderRadius: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 16,
+                  boxShadow: "0 4px 12px var(--p-glow)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                }}
+              >
+                🏠
+              </div>
+              <span
+                className="grad-text"
+                style={{
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  letterSpacing: "-0.03em",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 Roomie Finder
               </span>
             </Link>
 
-            <Link to="/roommates" className="glow-pulse" style={{ 
-              textDecoration: "none", marginLeft: 16, padding: "6px 14px", 
-              borderRadius: 100, border: "1.5px solid transparent", 
-              background: "linear-gradient(var(--sur), var(--sur)) padding-box, linear-gradient(135deg, var(--p), var(--sec)) border-box",
-              color: "var(--tx)", cursor: "pointer", fontSize: "0.8125rem", fontWeight: 600,
-              transition: "transform 0.3s ease, box-shadow 0.3s ease",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.03)"; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+            <Link
+              to="/roommates"
+              className="glow-pulse hidden md:inline-flex"
+              style={{
+                textDecoration: "none",
+                marginLeft: 8,
+                padding: "6px 14px",
+                borderRadius: 100,
+                border: "1.5px solid transparent",
+                background:
+                  "linear-gradient(var(--sur), var(--sur)) padding-box, linear-gradient(135deg, var(--p), var(--sec)) border-box",
+                color: "var(--tx)",
+                cursor: "pointer",
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                whiteSpace: "nowrap",
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.03)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+              }}
             >
               Find Roommates
             </Link>
           </div>
 
-          {/* Actions */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-1.5">
             <button
               onClick={toggleTheme}
               className="btn btn-ghost"
-              style={{ width: 36, height: 36, padding: 0, borderRadius: "50%", fontSize: 16, border: "1.5px solid var(--bdr)" }}
+              aria-label="Toggle theme"
+              style={{
+                width: 36,
+                height: 36,
+                padding: 0,
+                borderRadius: "50%",
+                fontSize: 16,
+                border: "1.5px solid var(--bdr)",
+              }}
             >
               {darkMode ? "☀️" : "🌙"}
             </button>
@@ -84,21 +130,37 @@ export default function Navbar() {
                   Expenses
                 </Link>
                 <Link to="/profile" style={{ textDecoration: "none" }}>
-                  <div style={{
-                    width: 34, height: 34, borderRadius: "50%",
-                    background: "linear-gradient(135deg, var(--p), var(--sec))",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#fff", fontWeight: 600, fontSize: "0.875rem", cursor: "pointer",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    boxShadow: "0 2px 8px var(--p-glow)",
-                  }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+                  <div
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, var(--p), var(--sec))",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      fontWeight: 600,
+                      fontSize: "0.875rem",
+                      cursor: "pointer",
+                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                      boxShadow: "0 2px 8px var(--p-glow)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "scale(1.08)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
                   >
                     {user.name?.charAt(0).toUpperCase() || "U"}
                   </div>
                 </Link>
-                <button onClick={() => setShowLogoutConfirm(true)} className="btn btn-ghost" style={{ fontSize: "0.875rem" }}>
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="btn btn-ghost"
+                  style={{ fontSize: "0.875rem" }}
+                >
                   Logout
                 </button>
               </>
@@ -113,25 +175,150 @@ export default function Navbar() {
               </>
             )}
           </div>
+
+          {/* Mobile Controls */}
+          <div className="flex md:hidden items-center gap-2 shrink-0">
+            <button
+              onClick={toggleTheme}
+              className="btn btn-ghost"
+              aria-label="Toggle theme"
+              style={{
+                width: 34,
+                height: 34,
+                padding: 0,
+                borderRadius: "50%",
+                fontSize: 15,
+                border: "1.5px solid var(--bdr)",
+              }}
+            >
+              {darkMode ? "☀️" : "🌙"}
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="btn btn-o"
+              aria-label="Toggle menu"
+              style={{ padding: "6px 10px", fontSize: "1rem", lineHeight: 1 }}
+            >
+              {mobileMenuOpen ? "✕" : "☰"}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div
+            className="md:hidden pb-4 pt-2 flex flex-col gap-2 border-t"
+            style={{ borderColor: "var(--bdr)" }}
+          >
+            <Link
+              to="/roommates"
+              onClick={() => setMobileMenuOpen(false)}
+              className="btn btn-o w-full justify-center no-underline"
+            >
+              Find Roommates
+            </Link>
+
+            {user ? (
+              <>
+                <Link
+                  to="/create"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="btn btn-p w-full justify-center no-underline"
+                >
+                  + Post a Room
+                </Link>
+                <div className="grid grid-cols-3 gap-2">
+                  <Link
+                    to="/inbox"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="btn btn-ghost justify-center no-underline"
+                    style={{ border: "1px solid var(--bdr)" }}
+                  >
+                    Inbox
+                  </Link>
+                  <Link
+                    to="/expenses"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="btn btn-ghost justify-center no-underline"
+                    style={{ border: "1px solid var(--bdr)" }}
+                  >
+                    Expenses
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="btn btn-ghost justify-center no-underline"
+                    style={{ border: "1px solid var(--bdr)" }}
+                  >
+                    Profile
+                  </Link>
+                </div>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setShowLogoutConfirm(true);
+                  }}
+                  className="btn btn-ghost w-full justify-center"
+                  style={{ color: "var(--p)" }}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="btn btn-o justify-center no-underline"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="btn btn-p justify-center no-underline"
+                >
+                  Get Started
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {showLogoutConfirm && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 100, padding: 24, animation: "fadeUp 0.2s ease"
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.4)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            padding: 24,
+            animation: "fadeUp 0.2s ease",
+          }}
+        >
           <div className="auth-card fade-up" style={{ textAlign: "center", padding: "32px 24px" }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🚪</div>
-            <h2 style={{ fontSize: "1.25rem", margin: "0 0 8px", color: "var(--tx)" }}>Log Out?</h2>
+            <h2 style={{ fontSize: "1.25rem", margin: "0 0 8px", color: "var(--tx)" }}>
+              Log Out?
+            </h2>
             <p style={{ color: "var(--tx2)", fontSize: "0.875rem", marginBottom: 24 }}>
               Are you sure you want to log out of your account?
             </p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <button className="btn btn-o" onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
-              <button className="btn btn-p" onClick={confirmLogout}>Yes, Log out</button>
+              <button className="btn btn-o" onClick={() => setShowLogoutConfirm(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-p" onClick={confirmLogout}>
+                Yes, Log out
+              </button>
             </div>
           </div>
         </div>

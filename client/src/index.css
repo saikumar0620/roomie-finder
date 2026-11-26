@@ -57,9 +57,17 @@
 
 /* ── Base ────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  width: 100%;
+  overflow-x: hidden;
+}
 
 body {
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--tx);
@@ -68,6 +76,11 @@ body {
   transition: background 0.3s var(--ease), color 0.3s var(--ease);
   line-height: 1.6;
   font-size: 15px;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
 }
 
 h1,h2,h3,h4,h5,h6 {
@@ -85,9 +98,19 @@ h1,h2,h3,h4,h5,h6 {
 
 /* ── Layout ──────────────────────────────────── */
 .wrap {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    padding: 0 16px;
+  }
+  .section-title {
+    font-size: 1.25rem;
+  }
 }
 
 /* ── Glass ───────────────────────────────────── */
