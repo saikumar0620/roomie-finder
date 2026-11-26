@@ -47,50 +47,60 @@ export default function Profile() {
   };
 
   return (
-    <div className="wrap fade-up" style={{ paddingTop: 40, paddingBottom: 60 }}>
+    <div className="wrap fade-up py-6 sm:py-10">
       {/* Profile card */}
-      <div style={{
-        background: "var(--sur)", border: "1px solid var(--bdr)",
-        borderRadius: 20, padding: "32px", marginBottom: 40,
-        boxShadow: "var(--sh2)",
-      }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 24 }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: "50%",
-            background: "linear-gradient(135deg, var(--p), var(--sec))",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#fff", fontSize: "2rem", fontWeight: 700,
-            backgroundImage: profile?.avatarId ? `url(${getFilePreview(profile.avatarId)})` : "none",
-            backgroundSize: "cover", backgroundPosition: "center",
-            boxShadow: "0 4px 16px var(--p-glow)", flexShrink: 0,
-          }}>
-            {!profile?.avatarId && (user?.name?.charAt(0).toUpperCase() || "U")}
-          </div>
-          
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontSize: "1.5rem", margin: "0 0 4px" }}>{user?.name}</h1>
-            <p style={{ color: "var(--tx2)", fontSize: "0.9375rem", margin: "0 0 16px" }}>{user?.email}</p>
-            
-            {profile?.bio && (
-              <p style={{ color: "var(--tx)", lineHeight: 1.6, fontSize: "0.9375rem", marginBottom: 16 }}>
-                {profile.bio}
-              </p>
-            )}
+      <div
+        className="p-5 sm:p-8 mb-8 sm:mb-10"
+        style={{
+          background: "var(--sur)", border: "1px solid var(--bdr)",
+          borderRadius: 20,
+          boxShadow: "var(--sh2)",
+        }}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-6">
+          <div className="flex items-center sm:items-start gap-4 sm:gap-6 flex-1 min-w-0">
+            <div
+              className="w-16 h-16 sm:w-20 sm:h-20 text-2xl sm:text-[2rem] shrink-0"
+              style={{
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, var(--p), var(--sec))",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#fff", fontWeight: 700,
+                backgroundImage: profile?.avatarId ? `url(${getFilePreview(profile.avatarId)})` : "none",
+                backgroundSize: "cover", backgroundPosition: "center",
+                boxShadow: "0 4px 16px var(--p-glow)",
+              }}
+            >
+              {!profile?.avatarId && (user?.name?.charAt(0).toUpperCase() || "U")}
+            </div>
 
-            {profile?.habits && (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {profile.habits.split(",").map(h => h.trim()).filter(Boolean).map((habit, i) => (
-                  <span key={i} className="tag" style={{ background: "var(--sur2)" }}>{habit}</span>
-                ))}
-              </div>
-            )}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl m-0 mb-1 break-words">{user?.name}</h1>
+              <p className="text-sm sm:text-[0.9375rem] m-0 mb-3 break-all" style={{ color: "var(--tx2)" }}>
+                {user?.email}
+              </p>
+
+              {profile?.bio && (
+                <p className="text-sm sm:text-[0.9375rem] leading-relaxed mb-3 break-words" style={{ color: "var(--tx)" }}>
+                  {profile.bio}
+                </p>
+              )}
+
+              {profile?.habits && (
+                <div className="flex gap-2 flex-wrap">
+                  {profile.habits.split(",").map(h => h.trim()).filter(Boolean).map((habit, i) => (
+                    <span key={i} className="tag" style={{ background: "var(--sur2)" }}>{habit}</span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Link to="/profile/edit" className="btn btn-o" style={{ textDecoration: "none" }}>
+
+          <div className="flex flex-row sm:flex-col gap-2.5 w-full sm:w-auto shrink-0">
+            <Link to="/profile/edit" className="btn btn-o flex-1 sm:flex-initial justify-center whitespace-nowrap" style={{ textDecoration: "none" }}>
               Edit Profile
             </Link>
-            <Link to="/create" className="btn btn-p" style={{ textDecoration: "none" }}>
+            <Link to="/create" className="btn btn-p flex-1 sm:flex-initial justify-center whitespace-nowrap" style={{ textDecoration: "none" }}>
               + Post Room
             </Link>
           </div>
@@ -98,12 +108,13 @@ export default function Profile() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 24, borderBottom: "1px solid var(--bdr)" }}>
+      <div className="flex gap-2 sm:gap-4 mb-6 overflow-x-auto" style={{ borderBottom: "1px solid var(--bdr)" }}>
         <button
           onClick={() => setActiveTab("listings")}
+          className="whitespace-nowrap"
           style={{
-            background: "none", border: "none", padding: "12px 16px",
-            fontSize: "1rem", fontWeight: activeTab === "listings" ? 600 : 500,
+            background: "none", border: "none", padding: "12px 14px",
+            fontSize: "0.95rem", fontWeight: activeTab === "listings" ? 600 : 500,
             color: activeTab === "listings" ? "var(--p)" : "var(--tx2)",
             borderBottom: activeTab === "listings" ? "2px solid var(--p)" : "2px solid transparent",
             cursor: "pointer", display: "flex", alignItems: "center", gap: 8
@@ -118,9 +129,10 @@ export default function Profile() {
         </button>
         <button
           onClick={() => setActiveTab("favorites")}
+          className="whitespace-nowrap"
           style={{
-            background: "none", border: "none", padding: "12px 16px",
-            fontSize: "1rem", fontWeight: activeTab === "favorites" ? 600 : 500,
+            background: "none", border: "none", padding: "12px 14px",
+            fontSize: "0.95rem", fontWeight: activeTab === "favorites" ? 600 : 500,
             color: activeTab === "favorites" ? "var(--p)" : "var(--tx2)",
             borderBottom: activeTab === "favorites" ? "2px solid var(--p)" : "2px solid transparent",
             cursor: "pointer", display: "flex", alignItems: "center", gap: 8
