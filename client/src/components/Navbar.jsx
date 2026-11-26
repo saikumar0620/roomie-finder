@@ -334,35 +334,44 @@ export default function Navbar() {
 
       {showLogoutConfirm && (
         <div
+          onClick={() => setShowLogoutConfirm(false)}
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
           style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.4)",
+            background: "rgba(0,0,0,0.45)",
             backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            padding: 24,
             animation: "fadeUp 0.2s ease",
           }}
         >
-          <div className="auth-card fade-up" style={{ textAlign: "center", padding: "32px 24px" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🚪</div>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="auth-card fade-up w-full sm:w-auto sm:min-w-[360px] max-w-none sm:max-w-[420px] rounded-t-3xl sm:rounded-2xl text-center px-6 pt-3 sm:pt-8"
+            style={{
+              paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))",
+            }}
+          >
+            {/* Mobile drag handle */}
+            <div
+              className="sm:hidden w-10 h-1 rounded-full mx-auto mb-5"
+              style={{ background: "var(--bdr)" }}
+            />
+            <div style={{ fontSize: 44, marginBottom: 12 }}>🚪</div>
             <h2 style={{ fontSize: "1.25rem", margin: "0 0 8px", color: "var(--tx)" }}>
               Log Out?
             </h2>
-            <p style={{ color: "var(--tx2)", fontSize: "0.875rem", marginBottom: 24 }}>
+            <p style={{ color: "var(--tx2)", fontSize: "0.875rem", marginBottom: 22 }}>
               Are you sure you want to log out of your account?
             </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <button className="btn btn-o" onClick={() => setShowLogoutConfirm(false)}>
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 justify-center">
+              <button
+                className="btn btn-o w-full sm:w-auto justify-center py-3 sm:py-2.5 px-6"
+                onClick={() => setShowLogoutConfirm(false)}
+              >
                 Cancel
               </button>
-              <button className="btn btn-p" onClick={confirmLogout}>
+              <button
+                className="btn btn-p w-full sm:w-auto justify-center py-3 sm:py-2.5 px-6"
+                onClick={confirmLogout}
+              >
                 Yes, Log out
               </button>
             </div>
