@@ -23,23 +23,27 @@ export const serializeProfile = (row) => ({
 export const serializeListing = (row) => ({
   $id: row.id,
   id: row.id,
-  userId: row.userId,
+  userId: row.userId ?? row.user_id,
   title: row.title,
   rent: row.rent,
   location: row.location,
   latitude: row.latitude ?? null,
   longitude: row.longitude ?? null,
+  distanceKm:
+    row.distance_km !== undefined && row.distance_km !== null
+      ? Math.round(Number(row.distance_km) * 10) / 10
+      : null,
   description: row.description,
   preferences: row.preferences,
   amenities: Array.isArray(row.amenities)
     ? row.amenities.join(", ")
     : row.amenities || "",
   images: row.images || [],
-  isAvailable: row.isAvailable,
+  isAvailable: row.isAvailable ?? row.is_available,
   ownerName: row.user?.profile?.name ?? row.user?.name,
   ownerAvatarUrl: row.user?.profile?.avatarUrl ?? null,
-  $createdAt: row.createdAt,
-  $updatedAt: row.updatedAt,
+  $createdAt: row.createdAt ?? row.created_at,
+  $updatedAt: row.updatedAt ?? row.updated_at,
 });
 
 export const serializeFavorite = (row) => ({

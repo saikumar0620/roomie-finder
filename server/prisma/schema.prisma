@@ -77,6 +77,7 @@ model Listing {
   @@index([userId, createdAt(sort: Desc)], map: "idx_listings_user_created")
   @@index([isAvailable, rent], map: "idx_listings_rent_available")
   @@index([isAvailable, preferences], map: "idx_listings_preferences_available")
+  @@index([isAvailable, latitude, longitude], map: "idx_listings_coords_available")
   @@index([amenities], type: Gin, map: "idx_listings_amenities_gin")
   @@map("listings")
 }

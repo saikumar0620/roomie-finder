@@ -1,12 +1,13 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useThemeStore } from "../store/useThemeStore";
 
 export default function Navbar() {
-  const { user, logoutUser } = useAuthStore();
+  const { user, loading, logoutUser } = useAuthStore();
   const { darkMode, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,139 +19,110 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  const linkStyle = {
-    textDecoration: "none",
-    color: "var(--tx2)",
-    fontSize: "0.875rem",
-    fontWeight: 500,
-    padding: "6px 12px",
-    borderRadius: 8,
-    transition: "all 0.2s ease",
-  };
+  const navItems = [
+    { to: "/", label: "Explore" },
+    { to: "/roommates", label: "Find Roommates" },
+    ...(user
+      ? [
+          { to: "/inbox", label: "Inbox" },
+          { to: "/expenses", label: "Expenses" },
+        ]
+      : []),
+  ];
+
+  const isActive = (to) =>
+    to === "/" ? pathname === "/" : pathname.startsWith(to);
 
   return (
     <nav
-      className="glass"
-      style={{ position: "sticky", top: 0, zIndex: 50, width: "100%" }}
+      className="glass sticky top-0 z-50 w-full"
+      style={{ borderBottom: "1px solid var(--bdr)" }}
     >
       <div className="wrap">
-        <div className="flex items-center justify-between h-[60px] gap-2">
-          {/* Logo + Find Roommates */}
-          <div className="flex items-center gap-4 min-w-0">
-            <Link
-              to="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5 shrink-0 no-underline"
-            >
-              <div
-                style={{
-                  width: 34,
-                  height: 34,
-                  background: "linear-gradient(135deg, var(--p), var(--acc))",
-                  borderRadius: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 16,
-                  boxShadow: "0 4px 12px var(--p-glow)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                🏠
-              </div>
-              <span
-                className="grad-text"
-                style={{
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  letterSpacing: "-0.03em",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Roomie Finder
-              </span>
-            </Link>
-
-            <Link
-              to="/roommates"
-              className="glow-pulse hidden md:inline-flex"
+        <div className="flex items-center justify-between h-16 gap-4">
+          {/* Left: Brand */}
+          <Link
+            to="/"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2.5 shrink-0 no-underline"
+          >
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
               style={{
-                textDecoration: "none",
-                marginLeft: 8,
-                padding: "6px 14px",
-                borderRadius: 100,
-                border: "1.5px solid transparent",
-                background:
-                  "linear-gradient(var(--sur), var(--sur)) padding-box, linear-gradient(135deg, var(--p), var(--sec)) border-box",
-                color: "var(--tx)",
-                cursor: "pointer",
-                fontSize: "0.8125rem",
-                fontWeight: 600,
-                whiteSpace: "nowrap",
-                transition: "transform 0.3s ease, box-shadow 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.03)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
+                background: "linear-gradient(135deg, var(--p), var(--acc))",
+                boxShadow: "0 4px 12px var(--p-glow)",
+                border: "1px solid rgba(255,255,255,0.2)",
               }}
             >
-              Find Roommates
-            </Link>
+              🏠
+            </div>
+            <span
+              className="grad-text font-bold text-base tracking-tight whitespace-nowrap"
+            >
+              Roomie Finder
+            </span>
+          </Link>
+
+          {/* Center: Desktop Navigation Pills */}
+          <div className="hidden md:flex items-center gap-1 p-1 rounded-2xl" style={{ background: "var(--sur2)", border: "1px solid var(--bdr)" }}>
+            {navItems.map((item) => {
+              const active = isActive(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="no-underline text-sm font-medium px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap"
+                  style={{
+                    background: active ? "var(--sur)" : "transparent",
+                    color: active ? "var(--p)" : "var(--tx2)",
+                    boxShadow: active ? "var(--sh1)" : "none",
+                  }}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-1.5">
+          {/* Right: Desktop Actions */}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
             <button
               onClick={toggleTheme}
-              className="btn btn-ghost"
               aria-label="Toggle theme"
+              className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
               style={{
-                width: 36,
-                height: 36,
-                padding: 0,
-                borderRadius: "50%",
-                fontSize: 16,
-                border: "1.5px solid var(--bdr)",
+                background: "var(--sur2)",
+                border: "1px solid var(--bdr)",
+                fontSize: 15,
               }}
             >
               {darkMode ? "☀️" : "🌙"}
             </button>
 
-            {user ? (
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="skel w-24 h-9 rounded-xl" />
+                <div className="skel w-9 h-9 rounded-full" />
+              </div>
+            ) : user ? (
               <>
-                <Link to="/create" className="btn btn-o" style={{ textDecoration: "none" }}>
-                  + Post
+                <Link
+                  to="/create"
+                  className="btn btn-p no-underline text-sm"
+                  style={{ padding: "8px 16px" }}
+                >
+                  + Post Room
                 </Link>
-                <Link to="/inbox" className="btn btn-ghost" style={{ textDecoration: "none", ...linkStyle }}>
-                  Inbox
-                </Link>
-                <Link to="/expenses" className="btn btn-ghost" style={{ textDecoration: "none", ...linkStyle }}>
-                  Expenses
-                </Link>
-                <Link to="/profile" style={{ textDecoration: "none" }}>
+                <Link
+                  to="/profile"
+                  title={user.name || "Profile"}
+                  className="no-underline"
+                >
                   <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold text-sm transition-transform hover:scale-105"
                     style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: "50%",
                       background: "linear-gradient(135deg, var(--p), var(--sec))",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      fontWeight: 600,
-                      fontSize: "0.875rem",
-                      cursor: "pointer",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
                       boxShadow: "0 2px 8px var(--p-glow)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.08)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
                     }}
                   >
                     {user.name?.charAt(0).toUpperCase() || "U"}
@@ -158,18 +130,26 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
-                  className="btn btn-ghost"
-                  style={{ fontSize: "0.875rem" }}
+                  className="btn btn-ghost text-sm"
+                  style={{ padding: "8px 10px" }}
                 >
                   Logout
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="btn btn-ghost" style={{ textDecoration: "none" }}>
+                <Link
+                  to="/login"
+                  className="btn btn-ghost no-underline text-sm"
+                  style={{ padding: "8px 14px" }}
+                >
                   Login
                 </Link>
-                <Link to="/signup" className="btn btn-p" style={{ textDecoration: "none" }}>
+                <Link
+                  to="/signup"
+                  className="btn btn-p no-underline text-sm"
+                  style={{ padding: "8px 16px" }}
+                >
                   Get Started
                 </Link>
               </>
@@ -180,24 +160,26 @@ export default function Navbar() {
           <div className="flex md:hidden items-center gap-2 shrink-0">
             <button
               onClick={toggleTheme}
-              className="btn btn-ghost"
               aria-label="Toggle theme"
+              className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
               style={{
-                width: 34,
-                height: 34,
-                padding: 0,
-                borderRadius: "50%",
+                background: "var(--sur2)",
+                border: "1px solid var(--bdr)",
                 fontSize: 15,
-                border: "1.5px solid var(--bdr)",
               }}
             >
               {darkMode ? "☀️" : "🌙"}
             </button>
             <button
               onClick={() => setMobileMenuOpen((v) => !v)}
-              className="btn btn-o"
               aria-label="Toggle menu"
-              style={{ padding: "6px 10px", fontSize: "1rem", lineHeight: 1 }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
+              style={{
+                background: "var(--sur2)",
+                border: "1px solid var(--bdr)",
+                color: "var(--tx)",
+                fontSize: "1.05rem",
+              }}
             >
               {mobileMenuOpen ? "✕" : "☰"}
             </button>
@@ -207,69 +189,68 @@ export default function Navbar() {
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div
-            className="md:hidden pb-4 pt-2 flex flex-col gap-2 border-t"
+            className="md:hidden pb-4 pt-3 flex flex-col gap-2 border-t"
             style={{ borderColor: "var(--bdr)" }}
           >
-            <Link
-              to="/roommates"
-              onClick={() => setMobileMenuOpen(false)}
-              className="btn btn-o w-full justify-center no-underline"
-            >
-              Find Roommates
-            </Link>
+            <div className="grid grid-cols-2 gap-2">
+              {navItems.map((item) => {
+                const active = isActive(item.to);
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="no-underline text-sm font-medium px-3 py-2.5 rounded-xl text-center"
+                    style={{
+                      background: active ? "var(--p-l)" : "var(--sur2)",
+                      color: active ? "var(--p)" : "var(--tx)",
+                      border: `1px solid ${active ? "var(--p)" : "var(--bdr)"}`,
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
 
             {user ? (
-              <>
+              <div className="flex flex-col gap-2 mt-1">
                 <Link
                   to="/create"
                   onClick={() => setMobileMenuOpen(false)}
                   className="btn btn-p w-full justify-center no-underline"
+                  style={{ padding: "10px 16px" }}
                 >
                   + Post a Room
                 </Link>
-                <div className="grid grid-cols-3 gap-2">
-                  <Link
-                    to="/inbox"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="btn btn-ghost justify-center no-underline"
-                    style={{ border: "1px solid var(--bdr)" }}
-                  >
-                    Inbox
-                  </Link>
-                  <Link
-                    to="/expenses"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="btn btn-ghost justify-center no-underline"
-                    style={{ border: "1px solid var(--bdr)" }}
-                  >
-                    Expenses
-                  </Link>
+                <div className="grid grid-cols-2 gap-2">
                   <Link
                     to="/profile"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="btn btn-ghost justify-center no-underline"
-                    style={{ border: "1px solid var(--bdr)" }}
+                    className="btn btn-o justify-center no-underline"
+                    style={{ padding: "9px 12px" }}
                   >
                     Profile
                   </Link>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setShowLogoutConfirm(true);
+                    }}
+                    className="btn btn-o justify-center"
+                    style={{ padding: "9px 12px", color: "var(--p)" }}
+                  >
+                    Logout
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setShowLogoutConfirm(true);
-                  }}
-                  className="btn btn-ghost w-full justify-center"
-                  style={{ color: "var(--p)" }}
-                >
-                  Logout
-                </button>
-              </>
+              </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 mt-1">
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
                   className="btn btn-o justify-center no-underline"
+                  style={{ padding: "9px 12px" }}
                 >
                   Login
                 </Link>
@@ -277,6 +258,7 @@ export default function Navbar() {
                   to="/signup"
                   onClick={() => setMobileMenuOpen(false)}
                   className="btn btn-p justify-center no-underline"
+                  style={{ padding: "9px 12px" }}
                 >
                   Get Started
                 </Link>

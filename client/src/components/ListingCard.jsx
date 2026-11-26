@@ -55,6 +55,26 @@ export default function ListingCard({ listing }) {
           }}>
             ₹{listing.rent?.toLocaleString()}/mo
           </div>
+          {/* Distance Pill (when Near Me is active) */}
+          {listing.distanceKm !== null && listing.distanceKm !== undefined && (
+            <div
+              style={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                background: "rgba(0,0,0,0.62)",
+                backdropFilter: "blur(8px)",
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "0.75rem",
+                padding: "4px 10px",
+                borderRadius: 100,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+              }}
+            >
+              📍 {listing.distanceKm} km away
+            </div>
+          )}
           {/* Favorite */}
           <div style={{ position: "absolute", top: 10, right: 10 }}>
             <FavoriteButton listingId={listing.$id} />

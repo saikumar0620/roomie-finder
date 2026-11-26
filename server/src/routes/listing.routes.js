@@ -60,6 +60,127 @@ router.get(
       maxLimit: 50,
     });
 
+    const hasLat = req.query.lat !== undefined && req.query.lat !== "";
+    const hasLng = req.query.lng !== undefined && req.query.lng !== "";
+
+    if (hasLat && hasLng) {
+      const lat = Number(req.query.lat);
+      const lng = Number(req.query.lng);
+      const radiusKm = Math.min(Math.max(Number(req.query.radiusKm) || 5, 0.5), 50);
+
+      if (
+        Number.isNaN(lat) ||
+        Number.isNaN(lng) ||
+        lat < -90 ||
+        lat > 90 ||
+        lng < -180 ||
+        lng > 180
+      ) {
+        throw new HttpError(400, "Invalid latitude or longitude");
+      }
+
+      // Bounding box pre-filter so Postgres can use idx_listings_coords_available
+      const dLat = radiusKm / 111.045;
+      const dLng = radiusKm / (111.045 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01));
+
+      const values = [
+        lat,
+        lng,
+        lat - dLat,
+        lat + dLat,
+        lng - dLng,
+        lng + dLng,
+      ];
+      const extraConditions = [];
+
+      if (req.query.minRent) {
+        values.push(Number(req.query.minRent));
+        extraConditions.push(`rent >= $${values.length}`);
+      }
+      if (req.query.maxRent) {
+        values.push(Number(req.query.maxRent));
+        extraConditions.push(`rent <= $${values.length}`);
+      }
+      if (req.query.location) {
+        values.push(`%${String(req.query.location).trim()}%`);
+        extraConditions.push(`location ILIKE $${values.length}`);
+      }
+      if (req.query.preferences) {
+        values.push(String(req.query.preferences).trim());
+        extraConditions.push(`preferences = $${values.length}`);
+      }
+      if (req.query.amenities) {
+        const amenList = String(req.query.amenities)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (amenList.length > 0) {
+          values.push(amenList);
+          extraConditions.push(`amenities @> $${values.length}::text[]`);
+        }
+      }
+
+      values.push(radiusKm);
+      const radiusParam = `$${values.length}`;
+
+      const whereSql = [
+        `is_available = true`,
+        `latitude IS NOT NULL`,
+        `longitude IS NOT NULL`,
+        `latitude BETWEEN $3 AND $4`,
+        `longitude BETWEEN $5 AND $6`,
+        ...extraConditions,
+      ].join(" AND ");
+
+      const haversineSql = `
+        6371 * acos(
+          LEAST(1.0, GREATEST(-1.0,
+            cos(radians($1)) * cos(radians(latitude)) *
+            cos(radians(longitude) - radians($2)) +
+            sin(radians($1)) * sin(radians(latitude))
+          ))
+        )
+      `;
+
+      const countRows = await prisma.$queryRawUnsafe(
+        `SELECT COUNT(*)::int AS total
+         FROM (
+           SELECT id, (${haversineSql}) AS distance_km
+           FROM roomie_finder.listings
+           WHERE ${whereSql}
+         ) sub
+         WHERE distance_km <= ${radiusParam}`,
+        ...values
+      );
+      const total = countRows[0]?.total || 0;
+
+      const limitParam = `$${values.length + 1}`;
+      const offsetParam = `$${values.length + 2}`;
+      const rows = await prisma.$queryRawUnsafe(
+        `SELECT * FROM (
+           SELECT id, user_id, title, rent, location, latitude, longitude,
+                  description, preferences, amenities, images, is_available,
+                  created_at, updated_at,
+                  (${haversineSql}) AS distance_km
+           FROM roomie_finder.listings
+           WHERE ${whereSql}
+         ) sub
+         WHERE distance_km <= ${radiusParam}
+         ORDER BY distance_km ASC, created_at DESC
+         LIMIT ${limitParam} OFFSET ${offsetParam}`,
+        ...values,
+        limit,
+        skip
+      );
+
+      const pagination = buildPaginationMeta({ page, limit, total });
+      return res.json({
+        documents: rows.map(serializeListing),
+        nextPage: pagination.nextPage,
+        pagination,
+      });
+    }
+
     const where = { isAvailable: true };
 
     if (req.query.minRent || req.query.maxRent) {

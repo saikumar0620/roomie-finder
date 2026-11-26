@@ -94,21 +94,23 @@ h1,h2,h3,h4,h5,h6 {
 ::-webkit-scrollbar-thumb:hover { background: var(--p); }
 
 /* ── Layout ──────────────────────────────────── */
-.wrap {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-left: 24px;
-  padding-right: 24px;
-}
-
-@media (max-width: 640px) {
+@layer components {
   .wrap {
-    padding-left: 16px;
-    padding-right: 16px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
   }
-  .section-title {
-    font-size: 1.25rem;
+
+  @media (max-width: 640px) {
+    .wrap {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+    .section-title {
+      font-size: 1.25rem;
+    }
   }
 }
 

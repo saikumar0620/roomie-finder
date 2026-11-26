@@ -71,6 +71,11 @@ export const getListings = async ({ pageParam = 1, filters = {} }) => {
   if (filters.amenities?.length) {
     params.amenities = filters.amenities.join(",");
   }
+  if (filters.lat !== undefined && filters.lng !== undefined) {
+    params.lat = filters.lat;
+    params.lng = filters.lng;
+    params.radiusKm = filters.radiusKm || 5;
+  }
 
   const { data } = await api.get("/listings", { params });
   return data;
