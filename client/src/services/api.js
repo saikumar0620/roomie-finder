@@ -1,10 +1,16 @@
 import axios from "axios";
 
-export const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const rawApiUrl = (
+  import.meta.env.VITE_API_URL || "http://localhost:5001/api"
+).replace(/\/+$/, "");
 
-export const SERVER_URL =
-  import.meta.env.VITE_SOCKET_URL || API_URL.replace(/\/api\/?$/, "");
+export const API_URL = rawApiUrl.endsWith("/api")
+  ? rawApiUrl
+  : `${rawApiUrl}/api`;
+
+export const SERVER_URL = (
+  import.meta.env.VITE_SOCKET_URL || API_URL.replace(/\/api\/?$/, "")
+).replace(/\/+$/, "");
 
 const TOKEN_KEY = "roomie_auth_token";
 
