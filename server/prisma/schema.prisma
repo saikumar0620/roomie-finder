@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_DIRECT")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile              Profile?
+  sessions             Session[]
+  listings             Listing[]
+  favorites            Favorite[]
+  conversationsAsUser1 Conversation[]  @relation("ConversationUser1")
+  conversationsAsUser2 Conversation[]  @relation("ConversationUser2")
+  messages             Message[]
+  createdRooms         Room[]
+  roomMemberships      RoomMember[]
+  expenses             Expense[]
+  expenseShares        ExpenseShare[]
+  recurringBills       RecurringBill[]
+
+  @@map("users")
+}
+
+model Profile {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  name           String
+  bio            String   @default("")
+  habits         String   @default("")
+  avatarUrl      String?  @map("avatar_url")
+  lookingForRoom Boolean  @default(false) @map("looking_for_room")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lookingForRoom, updatedAt(sort: Desc)], map: "idx_profiles_looking_for_room")
+  @@map("profiles")
+}
+
+model Listing {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  title       String
+  rent        Int
+  location    String
+  description String   @default("")
+  preferences String   @default("")
+  amenities   String[] @default([])
+  images      String[] @default([])
+  isAvailable Boolean  @default(true) @map("is_available")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favorites     Favorite[]
+  conversations Conversation[]
+
+  @@index([isAvailable, createdAt(sort: Desc), id(sort: Desc)], map: "idx_listings_available_created")
+  @@index([userId, createdAt(sort: Desc)], map: "idx_listings_user_created")
+  @@index([isAvailable, rent], map: "idx_listings_rent_available")
+  @@index([isAvailable, preferences], map: "idx_listings_preferences_available")
+  @@index([amenities], type: Gin, map: "idx_listings_amenities_gin")
+  @@map("listings")
+}
+
+model Favorite {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  listingId String   @map("listing_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([userId, createdAt(sort: Desc)], map: "idx_favorites_user_created")
+  @@map("favorites")
+}
+
+model Conversation {
+  id        String   @id @default(uuid()) @db.Uuid
+  listingId String?  @map("listing_id") @db.Uuid
+  user1Id   String   @map("user1_id") @db.Uuid
+  user2Id   String   @map("user2_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  listing  Listing?  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user1    User      @relation("ConversationUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2    User      @relation("ConversationUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([user1Id, updatedAt(sort: Desc)], map: "idx_conversations_user1")
+  @@index([user2Id, updatedAt(sort: Desc)], map: "idx_conversations_user2")
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  senderId       String   @map("sender_id") @db.Uuid
+  text           String
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt(sort: Asc), id(sort: Asc)], map: "idx_messages_conversation_created")
+  @@map("messages")
+}
+
+model Room {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  creator        User            @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  members        RoomMember[]
+  expenses       Expense[]
+  recurringBills RecurringBill[]
+
+  @@map("rooms")
+}
+
+model RoomMember {
+  roomId   String   @map("room_id") @db.Uuid
+  userId   String   @map("user_id") @db.Uuid
+  joinedAt DateTime @default(now()) @map("joined_at") @db.Timestamptz
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
+  @@index([userId], map: "idx_room_members_user")
+  @@map("room_members")
+}
+
+model Expense {
+  id          String   @id @default(uuid()) @db.Uuid
+  roomId      String   @map("room_id") @db.Uuid
+  createdBy   String   @map("created_by") @db.Uuid
+  amount      Decimal  @db.Decimal(10, 2)
+  category    String
+  splitMethod String   @map("split_method")
+  description String   @default("")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  room    Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  creator User           @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  shares  ExpenseShare[]
+
+  @@index([roomId, createdAt(sort: Desc)], map: "idx_expenses_room_created")
+  @@map("expenses")
+}
+
+model ExpenseShare {
+  id          String  @id @default(uuid()) @db.Uuid
+  expenseId   String  @map("expense_id") @db.Uuid
+  userId      String  @map("user_id") @db.Uuid
+  shareAmount Decimal @map("share_amount") @db.Decimal(10, 2)
+  isPaid      Boolean @default(false) @map("is_paid")
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expenseId], map: "idx_expense_shares_expense")
+  @@index([userId, isPaid], map: "idx_expense_shares_user_paid")
+  @@map("expense_shares")
+}
+
+model RecurringBill {
+  id          String   @id @default(uuid()) @db.Uuid
+  roomId      String   @map("room_id") @db.Uuid
+  createdBy   String   @map("created_by") @db.Uuid
+  amount      Decimal  @db.Decimal(10, 2)
+  description String
+  interval    String
+  dueDate     DateTime @map("due_date") @db.Timestamptz
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  room    Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([roomId, dueDate(sort: Asc)], map: "idx_recurring_bills_room_due")
+  @@map("recurring_bills")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  userAgent String?  @map("user_agent")
+  ipAddress String?  @map("ip_address")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_sessions_user")
+  @@index([expiresAt], map: "idx_sessions_expires")
+  @@map("sessions")
+}

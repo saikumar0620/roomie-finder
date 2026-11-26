@@ -1,84 +1,72 @@
 # Roomie Finder
 
-A platform to help users find compatible roommates and manage shared living arrangements.
+A full-stack platform to help users find compatible roommates, browse room listings, chat in real time, and split shared living expenses.
 
-## Features
+## Tech Stack
 
-- **Roommate Matching**: Find compatible roommates based on preferences and lifestyle
-- **User Profiles**: Create detailed profiles highlighting interests, habits, and requirements
-- **Search & Filter**: Advanced search options to narrow down potential roommates
-- **Messaging**: In-app messaging system to communicate with potential roommates
-- **Listings**: Browse and create room/apartment listings
-- **Reviews & Ratings**: Community ratings to build trust and credibility
+- **Frontend (`client/`)**: React 19, Vite 8, React Router 7, TanStack React Query, Zustand, Axios, Socket.IO Client, Tailwind CSS v4
+- **Backend (`server/`)**: Node.js, Express, Socket.IO, JWT (HTTP-only cookies + Bearer + Neon session tracking), Multer, Zod
+- **Database**: Neon (Lakebase PostgreSQL) + Prisma ORM (`roomie_finder` schema)
 
-## Installation
+## Project Folder Structure
 
-### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn package manager
-
-### Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/saikumar0620/roomie-finder.git
-cd roomie-finder
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Configure environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-4. Start the application:
-```bash
-npm start
-```
-
-## Usage
-
-1. Sign up for an account
-2. Complete your profile with personal preferences and living requirements
-3. Browse available roommates or listings
-4. Connect with potential matches through messaging
-5. Review and rate your experience with other users
-
-## Project Structure
-
-```
-roomie-finder/
-├── src/
-├── public/
-├── tests/
-├── docs/
+```text
+project-roomie-finder/
+├── client/                   # React + Vite frontend
+│   ├── public/
+│   ├── src/
+│   │   ├── components/       # Reusable UI components
+│   │   ├── hooks/            # React Query & Socket.IO hooks
+│   │   ├── pages/            # Route pages (Home, Chat, Expenses, Profile, etc.)
+│   │   ├── routes/           # AppRoutes & ProtectedRoute
+│   │   ├── services/         # Axios API & Socket.IO clients
+│   │   ├── store/            # Zustand global state (auth, theme, expenses)
+│   │   └── utils/            # Expense math helpers
+│   ├── .env.example
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+├── server/                   # Express + Prisma backend
+│   ├── prisma/
+│   │   └── schema.prisma     # Database models & indexes
+│   ├── src/
+│   │   ├── config/           # Env & Prisma client
+│   │   ├── middleware/       # Session-backed JWT auth, Multer upload, error handler
+│   │   ├── routes/           # REST API endpoints
+│   │   ├── services/         # Storage service (local /uploads, swappable for S3)
+│   │   ├── socket/           # Socket.IO real-time chat handler
+│   │   ├── utils/            # Response serializers
+│   │   ├── app.js            # Express app setup
+│   │   └── index.js          # HTTP + Socket.IO server entry
+│   └── .env.example
+├── .gitignore
+├── package.json              # Root workspace scripts
 └── README.md
 ```
 
-## Contributing
+## Setup
 
-Contributions are welcome! Please follow these steps:
+1. **Install all dependencies** (client + server):
+   ```bash
+   npm run install:all
+   ```
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. **Configure environment variables**:
+   - `client/.env` (from `client/.env.example`):
+     ```env
+     VITE_API_URL=http://localhost:5001/api
+     VITE_SOCKET_URL=http://localhost:5001
+     ```
+   - `server/.env` (from `server/.env.example`):
+     Add your Neon pooled `DATABASE_URL`, direct `DATABASE_URL_DIRECT`, and a random `JWT_SECRET`.
 
-## License
+3. **Push Prisma schema to Neon**:
+   ```bash
+   npm run db:push
+   ```
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support, email support@roomie-finder.com or open an issue on GitHub.
-
-## Acknowledgments
-
-- Thanks to all contributors who have helped with this project
-- Special thanks to our community members for feedback and suggestions
+4. **Start backend & frontend** (in two terminals):
+   ```bash
+   npm run dev:server
+   npm run dev:client
+   ```

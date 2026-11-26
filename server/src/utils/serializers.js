@@ -1,0 +1,102 @@
+export const serializeUser = (row) => ({
+  $id: row.id,
+  id: row.id,
+  email: row.email,
+  name: row.name,
+  $createdAt: row.createdAt,
+});
+
+export const serializeProfile = (row) => ({
+  $id: row.id,
+  id: row.id,
+  userId: row.userId,
+  name: row.name,
+  bio: row.bio,
+  habits: row.habits,
+  avatarId: row.avatarUrl,
+  avatarUrl: row.avatarUrl,
+  lookingForRoom: row.lookingForRoom,
+  $createdAt: row.createdAt,
+  $updatedAt: row.updatedAt,
+});
+
+export const serializeListing = (row) => ({
+  $id: row.id,
+  id: row.id,
+  userId: row.userId,
+  title: row.title,
+  rent: row.rent,
+  location: row.location,
+  description: row.description,
+  preferences: row.preferences,
+  amenities: Array.isArray(row.amenities)
+    ? row.amenities.join(", ")
+    : row.amenities || "",
+  images: row.images || [],
+  isAvailable: row.isAvailable,
+  ownerName: row.user?.profile?.name ?? row.user?.name,
+  ownerAvatarUrl: row.user?.profile?.avatarUrl ?? null,
+  $createdAt: row.createdAt,
+  $updatedAt: row.updatedAt,
+});
+
+export const serializeFavorite = (row) => ({
+  $id: row.id,
+  id: row.id,
+  userId: row.userId,
+  listingId: row.listingId,
+  $createdAt: row.createdAt,
+});
+
+export const serializeConversation = (row) => ({
+  $id: row.id,
+  id: row.id,
+  listingId: row.listingId || "general",
+  user1Id: row.user1Id,
+  user2Id: row.user2Id,
+  listingTitle: row.listing?.title ?? null,
+  $createdAt: row.createdAt,
+  $updatedAt: row.updatedAt,
+});
+
+export const serializeMessage = (row) => ({
+  $id: row.id,
+  id: row.id,
+  conversationId: row.conversationId,
+  senderId: row.senderId,
+  text: row.text,
+  $createdAt: row.createdAt,
+});
+
+export const serializeExpense = (row) => ({
+  $id: row.id,
+  id: row.id,
+  room_id: row.roomId,
+  created_by: row.createdBy,
+  amount: Number(row.amount),
+  category: row.category,
+  split_method: row.splitMethod,
+  description: row.description,
+  $createdAt: row.createdAt,
+});
+
+export const serializeExpenseShare = (row) => ({
+  $id: row.id,
+  id: row.id,
+  expense_id: row.expenseId,
+  user_id: row.userId,
+  share_amount: Number(row.shareAmount),
+  is_paid: row.isPaid,
+});
+
+export const serializeRecurringBill = (row) => ({
+  $id: row.id,
+  id: row.id,
+  room_id: row.roomId,
+  created_by: row.createdBy,
+  amount: Number(row.amount),
+  description: row.description,
+  interval: row.interval,
+  due_date: row.dueDate,
+  $createdAt: row.createdAt,
+});
