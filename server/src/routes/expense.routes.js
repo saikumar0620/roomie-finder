@@ -87,6 +87,47 @@ router.post(
 );
 
 router.get(
+  "/rooms/:roomId/dashboard",
+  asyncHandler(async (req, res) => {
+    const roomId = req.params.roomId;
+    await assertRoomMember(roomId, req.user.id);
+
+    const [members, expenses, shares, bills] = await Promise.all([
+      prisma.roomMember.findMany({
+        where: { roomId },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+      }),
+      prisma.expense.findMany({
+        where: { roomId },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      }),
+      prisma.expenseShare.findMany({
+        where: { expense: { roomId } },
+      }),
+      prisma.recurringBill.findMany({
+        where: { roomId },
+        orderBy: { dueDate: "asc" },
+      }),
+    ]);
+
+    res.json({
+      members: members.map((m) => ({
+        $id: m.user.id,
+        id: m.user.id,
+        name: m.user.name,
+        email: m.user.email,
+      })),
+      expenses: expenses.map(serializeExpense),
+      shares: shares.map(serializeExpenseShare),
+      bills: bills.map(serializeRecurringBill),
+    });
+  })
+);
+
+router.get(
   "/rooms/:roomId/expenses",
   asyncHandler(async (req, res) => {
     await assertRoomMember(req.params.roomId, req.user.id);

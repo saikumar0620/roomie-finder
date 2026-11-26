@@ -3,9 +3,12 @@ import { useRoomRecurringBills, useCreateRecurringBill } from '../../../hooks/us
 import { useAuthStore } from '../../../store/useAuthStore';
 import toast from 'react-hot-toast';
 
-export default function RecurringBills({ roomId }) {
+export default function RecurringBills({ roomId, bills: billsProp }) {
   const { user } = useAuthStore();
-  const { data: bills = [], isLoading } = useRoomRecurringBills(roomId);
+  const { data: fetchedBills = [], isLoading } = useRoomRecurringBills(
+    billsProp ? null : roomId
+  );
+  const bills = billsProp ?? fetchedBills;
   const createBillMutation = useCreateRecurringBill(roomId);
 
   const [showForm, setShowForm] = useState(false);

@@ -1,5 +1,21 @@
 import { api } from "./api";
 
+// --- ROOMS & DASHBOARD ---
+export const getUserRooms = async () => {
+  const { data } = await api.get("/rooms");
+  return data.rooms;
+};
+
+export const createRoom = async (name, memberIds = []) => {
+  const { data } = await api.post("/rooms", { name, memberIds });
+  return data.room;
+};
+
+export const getRoomDashboard = async (roomId) => {
+  const { data } = await api.get(`/rooms/${roomId}/dashboard`);
+  return data;
+};
+
 // --- EXPENSES ---
 export const createExpense = async (expenseData, sharesData = []) => {
   const { data } = await api.post("/expenses", {
