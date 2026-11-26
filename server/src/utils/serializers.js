@@ -15,6 +15,7 @@ export const serializeProfile = (row) => ({
   habits: row.habits,
   avatarId: row.avatarUrl,
   avatarUrl: row.avatarUrl,
+  upiId: row.upiId ?? null,
   lookingForRoom: row.lookingForRoom,
   $createdAt: row.createdAt,
   $updatedAt: row.updatedAt,

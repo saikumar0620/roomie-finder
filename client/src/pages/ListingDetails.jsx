@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getListingById, getFilePreview, reportListing } from "../services/listing.service";
+import { getListingById, getFilePreview, reportListing, requestVisit } from "../services/listing.service";
 import FavoriteButton from "../components/FavoriteButton";
 import { getOrCreateConversation } from "../services/chat.service";
 import { useAuthStore } from "../store/useAuthStore";
@@ -24,6 +24,37 @@ export default function ListingDetails() {
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0]);
   const [reportDetails, setReportDetails] = useState("");
   const [reporting, setReporting] = useState(false);
+  const [showVisitModal, setShowVisitModal] = useState(false);
+  const [visitDate, setVisitDate] = useState("");
+  const [visitNote, setVisitNote] = useState("");
+  const [requestingVisit, setRequestingVisit] = useState(false);
+
+  const handleVisitSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (!visitDate) {
+      toast.error("Please select a date and time");
+      return;
+    }
+    setRequestingVisit(true);
+    try {
+      const res = await requestVisit(id, new Date(visitDate).toISOString(), visitNote);
+      toast.success("Visit request sent to owner!");
+      setShowVisitModal(false);
+      setVisitDate("");
+      setVisitNote("");
+      if (res?.conversationId) {
+        navigate(`/chat/${res.conversationId}`);
+      }
+    } catch (err) {
+      toast.error(err?.message || "Failed to send visit request");
+    } finally {
+      setRequestingVisit(false);
+    }
+  };
 
   const handleReportSubmit = async (e) => {
     e.preventDefault();
@@ -176,11 +207,19 @@ export default function ListingDetails() {
         </div>
       )}
 
-      {/* CTA + Report */}
+      {/* CTA + Visit + Report */}
       {user?.$id !== data.userId && (
         <div className="flex flex-col sm:flex-row gap-3">
           <button onClick={handleContact} className="btn btn-p flex-1" style={{ padding: "14px", fontSize: "1rem" }}>
             💬 Contact Owner
+          </button>
+          <button
+            type="button"
+            onClick={() => (user ? setShowVisitModal(true) : navigate("/login"))}
+            className="btn btn-o sm:w-auto"
+            style={{ padding: "14px 20px", fontSize: "0.9375rem" }}
+          >
+            📅 Request Visit
           </button>
           <button
             type="button"
@@ -190,6 +229,54 @@ export default function ListingDetails() {
           >
             🚩 Report
           </button>
+        </div>
+      )}
+
+      {showVisitModal && (
+        <div
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 100, padding: 20,
+          }}
+        >
+          <div className="auth-card fade-up" style={{ width: "100%", maxWidth: 420, padding: 24 }}>
+            <h3 style={{ margin: "0 0 6px", fontSize: "1.15rem" }}>Schedule a Room Visit</h3>
+            <p style={{ color: "var(--tx2)", fontSize: "0.8125rem", marginBottom: 16 }}>
+              Pick a convenient time — we&apos;ll send this directly to the owner in chat and email.
+            </p>
+            <form onSubmit={handleVisitSubmit} className="flex flex-col gap-3">
+              <div>
+                <label className="lbl">Preferred Date &amp; Time *</label>
+                <input
+                  type="datetime-local"
+                  className="inp text-sm"
+                  value={visitDate}
+                  onChange={(e) => setVisitDate(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="lbl">Note (optional)</label>
+                <textarea
+                  className="inp text-sm"
+                  rows={3}
+                  placeholder="e.g., I work nearby and can visit after 6 PM"
+                  value={visitNote}
+                  onChange={(e) => setVisitNote(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 justify-end mt-2">
+                <button type="button" className="btn btn-o" onClick={() => setShowVisitModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={requestingVisit} className="btn btn-p">
+                  {requestingVisit ? "Sending..." : "Send Request"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

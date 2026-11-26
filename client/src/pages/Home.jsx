@@ -80,15 +80,15 @@ export default function Home() {
   };
 
   return (
-    <div className="wrap pt-8 pb-16 sm:pt-10">
+    <div className="wrap pt-4 pb-10 sm:pt-10 sm:pb-16">
       {/* Hero */}
-      <div className="fade-up text-center mb-10 sm:mb-12 mt-2 sm:mt-4">
+      <div className="fade-up text-center mb-6 sm:mb-12 mt-1 sm:mt-4">
         <span
           className="badge"
           style={{
-            marginBottom: 16,
-            padding: "6px 16px",
-            fontSize: "0.8125rem",
+            marginBottom: 10,
+            padding: "5px 14px",
+            fontSize: "0.75rem",
             boxShadow: "0 4px 12px var(--p-glow)",
           }}
         >
@@ -96,26 +96,26 @@ export default function Home() {
         </span>
         <h1
           style={{
-            fontSize: "clamp(2.25rem, 6vw, 4.25rem)",
+            fontSize: "clamp(1.75rem, 6vw, 4rem)",
             fontWeight: 800,
             letterSpacing: "-0.04em",
-            margin: "16px 0 18px",
-            lineHeight: 1.1,
+            margin: "10px 0 10px",
+            lineHeight: 1.12,
           }}
         >
           Your next home, <br />
           <span className="grad-text">waiting for you.</span>
         </h1>
         <p
+          className="text-sm sm:text-[1.0625rem]"
           style={{
             color: "var(--tx2)",
-            fontSize: "1.0625rem",
-            maxWidth: 540,
+            maxWidth: 520,
             margin: "0 auto",
-            lineHeight: 1.6,
+            lineHeight: 1.55,
           }}
         >
-          Discover verified roommates, browse premium listings, and seamlessly message owners — all in one beautifully designed space.
+          Discover verified roommates, browse listings, and message owners — all in one place.
         </p>
       </div>
 

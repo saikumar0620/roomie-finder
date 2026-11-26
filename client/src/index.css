@@ -111,6 +111,22 @@ h1,h2,h3,h4,h5,h6 {
     .section-title {
       font-size: 1.25rem;
     }
+    .auth-card {
+      padding: 24px 20px;
+      border-radius: 18px;
+    }
+    .inp {
+      font-size: 16px;
+      padding: 11px 14px;
+    }
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
@@ -145,13 +161,15 @@ h1,h2,h3,h4,h5,h6 {
   pointer-events: none;
   transition: box-shadow 0.3s var(--ease);
 }
-.card:hover {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: 0 14px 28px rgba(0,0,0,0.1), 0 10px 10px rgba(225,29,72,0.08);
-  border-color: var(--p);
-}
-.card:hover::after {
-  box-shadow: inset 0 0 0 1px var(--p-glow);
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.1), 0 10px 10px rgba(225,29,72,0.08);
+    border-color: var(--p);
+  }
+  .card:hover::after {
+    box-shadow: inset 0 0 0 1px var(--p-glow);
+  }
 }
 
 /* ── Auth card ───────────────────────────────── */

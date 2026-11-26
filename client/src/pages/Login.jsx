@@ -48,7 +48,12 @@ export default function Login() {
             <input type="email" className="inp" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
           <div>
-            <label className="lbl">Password</label>
+            <div className="flex items-center justify-between">
+              <label className="lbl">Password</label>
+              <Link to="/forgot-password" className="text-xs no-underline mb-1.5" style={{ color: "var(--p)" }}>
+                Forgot password?
+              </Link>
+            </div>
             <input type="password" className="inp" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
 

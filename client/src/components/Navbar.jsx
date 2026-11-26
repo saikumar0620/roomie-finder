@@ -35,13 +35,31 @@ export default function Navbar() {
   const isActive = (to) =>
     to === "/" ? pathname === "/" : pathname.startsWith(to);
 
+  const isChatThread = /^\/chat\/[^/]+/.test(pathname);
+
+  const mobileTabs = user
+    ? [
+        { to: "/", label: "Explore", icon: "🏠" },
+        { to: "/roommates", label: "Roomies", icon: "👥" },
+        { to: "/create", label: "Post", icon: "➕" },
+        { to: "/inbox", label: "Inbox", icon: "💬", badge: unreadCount },
+        { to: "/expenses", label: "Expenses", icon: "💰" },
+      ]
+    : [
+        { to: "/", label: "Explore", icon: "🏠" },
+        { to: "/roommates", label: "Roomies", icon: "👥" },
+        { to: "/login", label: "Sign In", icon: "🔐" },
+        { to: "/signup", label: "Join", icon: "✨" },
+      ];
+
   return (
-    <nav
-      className="glass sticky top-0 z-50 w-full"
-      style={{ borderBottom: "1px solid var(--bdr)" }}
-    >
-      <div className="wrap">
-        <div className="flex items-center justify-between h-16 gap-4">
+    <>
+      <nav
+        className="glass sticky top-0 z-50 w-full"
+        style={{ borderBottom: "1px solid var(--bdr)" }}
+      >
+        <div className="wrap">
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
           {/* Left: Brand */}
           <Link
             to="/"
@@ -167,7 +185,35 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Controls */}
-          <div className="flex md:hidden items-center gap-2 shrink-0">
+          <div className="flex md:hidden items-center gap-1.5 shrink-0">
+            {!loading && !user && (
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="btn btn-p no-underline text-xs font-semibold whitespace-nowrap"
+                style={{ padding: "7px 12px", borderRadius: 10 }}
+              >
+                Sign In
+              </Link>
+            )}
+            {!loading && user && (
+              <Link
+                to="/profile"
+                onClick={() => setMobileMenuOpen(false)}
+                title={user.name || "Profile"}
+                className="no-underline"
+              >
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-xs"
+                  style={{
+                    background: "linear-gradient(135deg, var(--p), var(--sec))",
+                    boxShadow: "0 2px 8px var(--p-glow)",
+                  }}
+                >
+                  {user.name?.charAt(0).toUpperCase() || "U"}
+                </div>
+              </Link>
+            )}
             <button
               onClick={toggleTheme}
               aria-label="Toggle theme"
@@ -323,6 +369,49 @@ export default function Navbar() {
           </div>
         </div>
       )}
-    </nav>
+      </nav>
+
+      {/* Mobile Bottom Navigation Bar */}
+      {!isChatThread && (
+        <div
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 glass border-t"
+          style={{
+            borderColor: "var(--bdr)",
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          }}
+        >
+          <div className="flex items-center justify-around h-16 px-2">
+            {mobileTabs.map((tab) => {
+              const active = isActive(tab.to);
+              return (
+                <Link
+                  key={tab.to}
+                  to={tab.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="no-underline flex flex-col items-center justify-center gap-0.5 px-2.5 py-1.5 rounded-xl relative min-w-[56px] transition-colors"
+                  style={{
+                    color: active ? "var(--p)" : "var(--tx2)",
+                    background: active ? "var(--p-l)" : "transparent",
+                  }}
+                >
+                  <span className="text-lg leading-none">{tab.icon}</span>
+                  <span className="text-[11px] font-semibold leading-tight">
+                    {tab.label}
+                  </span>
+                  {tab.badge > 0 && (
+                    <span
+                      className="absolute top-0.5 right-1.5 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full leading-none"
+                      style={{ background: "var(--p)" }}
+                    >
+                      {tab.badge > 99 ? "99+" : tab.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

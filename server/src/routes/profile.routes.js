@@ -14,6 +14,13 @@ const upsertProfileSchema = z.object({
   habits: z.string().max(500).optional().default(""),
   avatarId: z.string().max(500).optional().nullable(),
   avatarUrl: z.string().max(500).optional().nullable(),
+  upiId: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" ? null : v)),
   lookingForRoom: z.boolean().optional().default(false),
 });
 
@@ -72,6 +79,7 @@ router.put(
           bio: data.bio,
           habits: data.habits,
           avatarUrl: avatar ?? null,
+          upiId: data.upiId ?? null,
           lookingForRoom: data.lookingForRoom,
         },
         update: {
@@ -79,6 +87,7 @@ router.put(
           bio: data.bio,
           habits: data.habits,
           lookingForRoom: data.lookingForRoom,
+          ...(data.upiId !== undefined ? { upiId: data.upiId } : {}),
           ...(avatar !== undefined ? { avatarUrl: avatar } : {}),
         },
       }),

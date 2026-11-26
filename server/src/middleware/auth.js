@@ -38,13 +38,21 @@ export async function verifySessionToken(token) {
 
   const session = await prisma.session.findUnique({
     where: { id: payload.sessionId },
+    include: {
+      user: { select: { id: true, email: true, name: true } },
+    },
   });
 
-  if (!session || session.expiresAt <= new Date()) {
+  if (!session || session.expiresAt <= new Date() || !session.user) {
     throw new Error("Session expired or revoked");
   }
 
-  return payload;
+  return {
+    ...payload,
+    id: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+  };
 }
 
 export async function requireAuth(req, res, next) {

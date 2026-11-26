@@ -214,3 +214,47 @@ export const useCreateRecurringBill = (roomId) => {
     },
   });
 };
+
+export const useCreateChore = (roomId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload) => expenseService.createChore(roomId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['room_dashboard', roomId] });
+      toast.success('Chore added!');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to add chore.');
+    },
+  });
+};
+
+export const useToggleChore = (roomId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ choreId, isDone }) => expenseService.toggleChoreStatus(choreId, isDone),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['room_dashboard', roomId] });
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to update chore.');
+    },
+  });
+};
+
+export const useDeleteChore = (roomId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (choreId) => expenseService.deleteChore(choreId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['room_dashboard', roomId] });
+      toast.success('Chore removed');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to delete chore.');
+    },
+  });
+};

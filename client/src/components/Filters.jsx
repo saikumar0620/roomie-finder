@@ -29,6 +29,13 @@ export default function Filters({
   const [location, setLocation] = useState("");
   const [preferences, setPreferences] = useState("");
   const [amenities, setAmenities] = useState([]);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+
+  const activeAdvancedCount =
+    (minRent ? 1 : 0) +
+    (maxRent ? 1 : 0) +
+    (preferences ? 1 : 0) +
+    amenities.length;
 
   const toggleAmenity = (amenity) => {
     setAmenities((prev) =>
@@ -142,7 +149,16 @@ export default function Filters({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-        <div className="lg:col-span-2">
+        <div className="sm:col-span-2 lg:col-span-4 order-1 lg:order-3">
+          <label className="lbl">Location</label>
+          <LocationAutocomplete
+            value={location}
+            onChange={setLocation}
+            placeholder="City or area..."
+          />
+        </div>
+
+        <div className={`${mobileExpanded ? "block" : "hidden sm:block"} lg:col-span-2 order-3 lg:order-1`}>
           <label className="lbl">Min Rent (₹)</label>
           <input
             type="number"
@@ -153,7 +169,7 @@ export default function Filters({
           />
         </div>
 
-        <div className="lg:col-span-2">
+        <div className={`${mobileExpanded ? "block" : "hidden sm:block"} lg:col-span-2 order-4 lg:order-2`}>
           <label className="lbl">Max Rent (₹)</label>
           <input
             type="number"
@@ -164,16 +180,7 @@ export default function Filters({
           />
         </div>
 
-        <div className="sm:col-span-2 lg:col-span-4">
-          <label className="lbl">Location</label>
-          <LocationAutocomplete
-            value={location}
-            onChange={setLocation}
-            placeholder="City or area..."
-          />
-        </div>
-
-        <div className="lg:col-span-2">
+        <div className={`${mobileExpanded ? "block" : "hidden sm:block"} lg:col-span-2 order-5 lg:order-4`}>
           <label className="lbl">Preference</label>
           <select
             className="inp"
@@ -191,13 +198,24 @@ export default function Filters({
           </select>
         </div>
 
-        <div className="lg:col-span-2 flex gap-2">
+        <div className="lg:col-span-2 flex gap-2 order-2 lg:order-5">
           <button type="submit" className="btn btn-p flex-1 justify-center">
             Search
           </button>
           <button
             type="button"
-            className="btn btn-o justify-center"
+            onClick={() => setMobileExpanded((v) => !v)}
+            className="btn btn-o sm:hidden justify-center px-3"
+            style={{
+              borderColor: activeAdvancedCount > 0 ? "var(--p)" : "var(--bdr)",
+              color: activeAdvancedCount > 0 ? "var(--p)" : "var(--tx)",
+            }}
+          >
+            ⚙️ {activeAdvancedCount > 0 ? `(${activeAdvancedCount})` : "Filters"}
+          </button>
+          <button
+            type="button"
+            className={`btn btn-o justify-center ${mobileExpanded ? "inline-flex" : "hidden sm:inline-flex"}`}
             onClick={handleReset}
           >
             Reset
@@ -205,12 +223,13 @@ export default function Filters({
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className={`mt-4 ${mobileExpanded ? "block" : "hidden sm:block"}`}>
         <label className="lbl mb-2 block">Amenities</label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-nowrap overflow-x-auto no-scrollbar sm:flex-wrap gap-2 pb-1">
           {AMENITIES_LIST.map(({ id, icon }) => (
             <label
               key={id}
+              className="shrink-0 whitespace-nowrap"
               style={{
                 display: "inline-flex",
                 alignItems: "center",

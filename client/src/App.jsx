@@ -14,7 +14,9 @@ function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      <AppRoutes />
+      <main className="pb-20 md:pb-0">
+        <AppRoutes />
+      </main>
     </BrowserRouter>
   );
 }

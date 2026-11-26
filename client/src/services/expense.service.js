@@ -81,3 +81,19 @@ export const getRecurringBillsByRoom = async (roomId) => {
   const { data } = await api.get(`/rooms/${roomId}/recurring-bills`);
   return data.bills;
 };
+
+// --- CHORES ---
+export const createChore = async (roomId, payload) => {
+  const { data } = await api.post(`/rooms/${roomId}/chores`, payload);
+  return data.chore;
+};
+
+export const toggleChoreStatus = async (choreId, isDone) => {
+  const { data } = await api.patch(`/chores/${choreId}`, { isDone });
+  return data.chore;
+};
+
+export const deleteChore = async (choreId) => {
+  const { data } = await api.delete(`/chores/${choreId}`);
+  return data;
+};

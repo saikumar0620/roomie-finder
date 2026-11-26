@@ -18,6 +18,7 @@ import SplitForm from './components/SplitForm';
 import SettlementSummary from './components/SettlementSummary';
 import ExpenseList from './components/ExpenseList';
 import RecurringBills from './components/RecurringBills';
+import ChoreBoard from './components/ChoreBoard';
 
 export default function ExpenseDashboard() {
   const { user } = useAuthStore();
@@ -114,6 +115,7 @@ export default function ExpenseDashboard() {
   const expenses = dashboard?.expenses || [];
   const shares = dashboard?.shares || [];
   const bills = dashboard?.bills || [];
+  const chores = dashboard?.chores || [];
   const isCreator = activeRoom?.createdBy === user.$id;
 
   const copyInviteCode = () => {
@@ -387,6 +389,7 @@ export default function ExpenseDashboard() {
                 members={members}
               />
               <RecurringBills roomId={activeRoomId} bills={bills} />
+              <ChoreBoard roomId={activeRoomId} chores={chores} members={members} />
             </div>
           </div>
         </>

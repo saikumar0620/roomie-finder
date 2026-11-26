@@ -13,7 +13,7 @@ export default function EditProfile() {
 
   const [loading, setLoading] = useState(false);
   const [profileId, setProfileId] = useState(null);
-  const [form, setForm] = useState({ name: "", bio: "", habits: "" });
+  const [form, setForm] = useState({ name: "", bio: "", habits: "", upiId: "" });
   const [lookingForRoom, setLookingForRoom] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
@@ -23,7 +23,12 @@ export default function EditProfile() {
       getProfile(user.$id).then(prof => {
         if (prof) {
           setProfileId(prof.$id);
-          setForm({ name: prof.name || user.name || "", bio: prof.bio || "", habits: prof.habits || "" });
+          setForm({
+            name: prof.name || user.name || "",
+            bio: prof.bio || "",
+            habits: prof.habits || "",
+            upiId: prof.upiId || "",
+          });
           if (prof.avatarId) {
             setAvatarUrl(getFilePreview(prof.avatarId).toString());
           }
@@ -54,6 +59,7 @@ export default function EditProfile() {
         name: form.name || user.name || "Anonymous",
         bio: form.bio,
         habits: form.habits,
+        upiId: form.upiId?.trim() || null,
         lookingForRoom,
       };
 
@@ -173,6 +179,16 @@ export default function EditProfile() {
                 onChange={set("habits")} 
               />
               <p style={{ fontSize: "0.75rem", color: "var(--tx2)", marginTop: 6 }}>Separate with commas.</p>
+            </div>
+
+            <div>
+              <label className="lbl">UPI ID (optional, for instant expense settlements)</label>
+              <input
+                className="inp"
+                placeholder="e.g., yourname@okicici or 9876543210@ybl"
+                value={form.upiId}
+                onChange={set("upiId")}
+              />
             </div>
 
             <button type="submit" className="btn btn-p" disabled={loading} style={{ width: "100%", padding: "13px", marginTop: 8 }}>

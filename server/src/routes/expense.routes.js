@@ -5,7 +5,10 @@ import { prisma } from "../config/db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { asyncHandler, HttpError } from "../middleware/errorHandler.js";
 import { buildPaginationMeta, parsePagination } from "../utils/pagination.js";
-import { sendRoomInviteEmail } from "../services/email.service.js";
+import {
+  sendExpenseNotificationEmail,
+  sendRoomInviteEmail,
+} from "../services/email.service.js";
 import {
   serializeExpense,
   serializeExpenseShare,
@@ -318,12 +321,19 @@ router.get(
     const roomId = req.params.roomId;
     await assertRoomMember(roomId, req.user.id);
 
-    let [room, members, expenses, shares, bills] = await Promise.all([
+    let [room, members, expenses, shares, bills, chores] = await Promise.all([
       prisma.room.findUnique({ where: { id: roomId } }),
       prisma.roomMember.findMany({
         where: { roomId },
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profile: { select: { upiId: true } },
+            },
+          },
         },
       }),
       prisma.expense.findMany({
@@ -337,6 +347,10 @@ router.get(
       prisma.recurringBill.findMany({
         where: { roomId },
         orderBy: { dueDate: "asc" },
+      }),
+      prisma.chore.findMany({
+        where: { roomId },
+        orderBy: [{ isDone: "asc" }, { createdAt: "desc" }],
       }),
     ]);
 
@@ -354,10 +368,12 @@ router.get(
         id: m.user.id,
         name: m.user.name,
         email: m.user.email,
+        upiId: m.user.profile?.upiId ?? null,
       })),
       expenses: expenses.map(serializeExpense),
       shares: shares.map(serializeExpenseShare),
       bills: bills.map(serializeRecurringBill),
+      chores,
     });
   })
 );
@@ -418,8 +434,65 @@ router.post(
       expense: serializeExpense(expense),
       shares: expense.shares.map(serializeExpenseShare),
     });
+
+    // Fire-and-forget personalized email notifications to roommates who owe a share
+    notifyRoommatesAboutExpense({
+      roomId: data.room_id,
+      creatorId: req.user.id,
+      creatorName: req.user.name || "Your roommate",
+      totalAmount: data.amount,
+      category: data.category,
+      description: data.description,
+      shares: data.shares,
+      appUrl: req.headers.origin,
+    }).catch((err) => console.error("Expense email notification error:", err.message));
   })
 );
+
+async function notifyRoommatesAboutExpense({
+  roomId,
+  creatorId,
+  creatorName,
+  totalAmount,
+  category,
+  description,
+  shares,
+  appUrl,
+}) {
+  const recipientShares = shares.filter(
+    (s) => s.user_id !== creatorId && Number(s.share_amount) > 0
+  );
+  if (recipientShares.length === 0) return;
+
+  const [room, users] = await Promise.all([
+    prisma.room.findUnique({ where: { id: roomId }, select: { name: true } }),
+    prisma.user.findMany({
+      where: { id: { in: recipientShares.map((s) => s.user_id) } },
+      select: { id: true, name: true, email: true },
+    }),
+  ]);
+
+  const userMap = new Map(users.map((u) => [u.id, u]));
+  const roomName = room?.name || "Shared Room";
+
+  await Promise.allSettled(
+    recipientShares.map((share) => {
+      const recipient = userMap.get(share.user_id);
+      if (!recipient?.email) return Promise.resolve();
+      return sendExpenseNotificationEmail({
+        toEmail: recipient.email,
+        toName: recipient.name,
+        creatorName,
+        roomName,
+        description,
+        category,
+        totalAmount,
+        shareAmount: share.share_amount,
+        appUrl,
+      });
+    })
+  );
+}
 
 router.get(
   "/rooms/:roomId/expense-shares",
@@ -481,6 +554,70 @@ router.post(
       },
     });
     res.status(201).json({ bill: serializeRecurringBill(bill) });
+  })
+);
+
+const createChoreSchema = z.object({
+  title: z.string().trim().min(1).max(160),
+  assignedTo: z.string().uuid().optional().nullable(),
+  dueDate: z.string().datetime().optional().nullable(),
+});
+
+const updateChoreSchema = z.object({
+  isDone: z.boolean(),
+});
+
+router.post(
+  "/rooms/:roomId/chores",
+  asyncHandler(async (req, res) => {
+    const data = createChoreSchema.parse(req.body);
+    await assertRoomMember(req.params.roomId, req.user.id);
+
+    const chore = await prisma.chore.create({
+      data: {
+        roomId: req.params.roomId,
+        title: data.title,
+        assignedTo: data.assignedTo ?? null,
+        dueDate: data.dueDate ? new Date(data.dueDate) : null,
+      },
+    });
+    res.status(201).json({ chore });
+  })
+);
+
+router.patch(
+  "/chores/:choreId",
+  asyncHandler(async (req, res) => {
+    const { isDone } = updateChoreSchema.parse(req.body);
+    const existing = await prisma.chore.findUnique({
+      where: { id: req.params.choreId },
+    });
+    if (!existing) {
+      throw new HttpError(404, "Chore not found");
+    }
+    await assertRoomMember(existing.roomId, req.user.id);
+
+    const chore = await prisma.chore.update({
+      where: { id: req.params.choreId },
+      data: { isDone },
+    });
+    res.json({ chore });
+  })
+);
+
+router.delete(
+  "/chores/:choreId",
+  asyncHandler(async (req, res) => {
+    const existing = await prisma.chore.findUnique({
+      where: { id: req.params.choreId },
+    });
+    if (!existing) {
+      throw new HttpError(404, "Chore not found");
+    }
+    await assertRoomMember(existing.roomId, req.user.id);
+
+    await prisma.chore.delete({ where: { id: req.params.choreId } });
+    res.json({ ok: true });
   })
 );
 

@@ -95,10 +95,23 @@ export default function Roommates() {
                   }}>
                     {!prof.avatarId && "U"}
                   </div>
-                  <div>
-                    <h3 style={{ margin: "0 0 4px", fontSize: "1.125rem", fontWeight: 700, color: "var(--tx)" }}>
-                      {prof.name ? prof.name : `Roommate ${prof.userId.slice(-4)}`}
-                    </h3>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 style={{ margin: "0 0 4px", fontSize: "1.125rem", fontWeight: 700, color: "var(--tx)" }}>
+                        {prof.name ? prof.name : `Roommate ${prof.userId.slice(-4)}`}
+                      </h3>
+                      {matchPercent !== null && (
+                        <span
+                          className="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full"
+                          style={{
+                            background: matchPercent >= 70 ? "rgba(16,185,129,0.14)" : "var(--p-l)",
+                            color: matchPercent >= 70 ? "#059669" : "var(--p)",
+                          }}
+                        >
+                          {matchPercent}% Match
+                        </span>
+                      )}
+                    </div>
                     <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--tx2)", display: "flex", alignItems: "center", gap: 4 }}>
                       📍 Seeking a Room
                     </p>
