@@ -8,7 +8,7 @@ A full-stack platform to help users find compatible roommates, browse room listi
 - **Backend (`server/`)**: Node.js, Express, Socket.IO, JWT (HTTP-only cookies + Bearer + Neon session tracking), Multer, Zod
 - **Database**: Neon (Lakebase PostgreSQL) + Prisma ORM (`roomie_finder` schema)
 
-## Project Folder Structure
+## Project Folder Structure 
 
 ```text
 project-roomie-finder/
