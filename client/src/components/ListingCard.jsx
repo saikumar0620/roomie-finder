@@ -1,27 +1,24 @@
 import { getFilePreview } from "../services/listing.service";
 import FavoriteButton from "./FavoriteButton";
+import ImageCarousel from "./ImageCarousel";
 import { Link } from "react-router-dom";
 
 export default function ListingCard({ listing }) {
-  const imgSrc = listing.images?.[0]
-    ? getFilePreview(listing.images[0]).toString()
-    : "https://placehold.co/600x400/FFF1F2/E11D48?text=No+Image";
+  const imageUrls = listing.images?.length
+    ? listing.images.map((img) => getFilePreview(img).toString())
+    : ["https://placehold.co/600x400/FFF1F2/E11D48?text=No+Image"];
 
   return (
     <Link to={`/listing/${listing.$id}`} style={{ textDecoration: "none", display: "block" }}>
       <div className="card fade-up" style={{ cursor: "pointer" }}>
-        {/* Image */}
+        {/* Image Carousel */}
         <div style={{ position: "relative", overflow: "hidden", height: 200 }}>
-          <img
-            src={imgSrc}
-            loading="lazy"
+          <ImageCarousel
+            images={imageUrls}
             alt={listing.title}
-            style={{
-              width: "100%", height: "100%", objectFit: "cover",
-              transition: "transform 0.4s ease",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.05)"; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+            height="h-[200px]"
+            rounded="rounded-none"
+            preventLinkNavigation
           />
           {/* Gradient overlay */}
           <div style={{

@@ -5,6 +5,7 @@ import FavoriteButton from "../components/FavoriteButton";
 import { getOrCreateConversation } from "../services/chat.service";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
+import ImageCarousel from "../components/ImageCarousel";
 
 export default function ListingDetails() {
   const { id } = useParams();
@@ -37,30 +38,20 @@ export default function ListingDetails() {
 
   if (!data) return null;
 
-  const images = data.images || [];
+  const images = (data.images || []).map((imgId) => getFilePreview(imgId).toString());
 
   return (
     <div className="wrap fade-up" style={{ paddingTop: 40, paddingBottom: 60, maxWidth: 860 }}>
-      {/* Image gallery */}
+      {/* Image carousel */}
       {images.length > 0 && (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: images.length > 1 ? "2fr 1fr" : "1fr",
-          gap: 12, borderRadius: 20, overflow: "hidden", marginBottom: 32,
-          maxHeight: 420,
-        }}>
-          {images.slice(0, 3).map((imgId, i) => (
-            <img
-              key={i}
-              src={getFilePreview(imgId).toString()}
-              alt={`Photo ${i + 1}`}
-              style={{
-                width: "100%", height: i === 0 ? 420 : 204, objectFit: "cover",
-                gridRow: i === 0 ? "1 / 3" : "auto",
-                transition: "transform 0.3s ease",
-              }}
-            />
-          ))}
+        <div className="mb-8">
+          <ImageCarousel
+            images={images}
+            alt={data.title}
+            height="h-[260px] sm:h-[420px]"
+            rounded="rounded-2xl"
+            showThumbnails
+          />
         </div>
       )}
 

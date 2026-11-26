@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
-import { createListing, updateListing, getListingById, uploadImages } from "../services/listing.service";
+import { useState, useEffect, useMemo } from "react";
+import { createListing, updateListing, getListingById, uploadImages, getFilePreview } from "../services/listing.service";
 import { useAuthStore } from "../store/useAuthStore";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import LocationAutocomplete from "../components/LocationAutocomplete";
+import ImageCarousel from "../components/ImageCarousel";
+
+const MAX_IMAGES = 5;
 
 const AMENITIES_LIST = [
   { id: "WiFi", icon: "📶" },
@@ -35,14 +38,35 @@ export default function CreateListing() {
   const [form, setForm] = useState({ title: "", rent: "", location: "", description: "", preferences: "" });
   const [isAvailable, setIsAvailable] = useState(true);
   const [amenities, setAmenities] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const filePreviews = useMemo(
+    () => files.map((file) => URL.createObjectURL(file)),
+    [files]
+  );
+
+  useEffect(() => {
+    return () => {
+      filePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [filePreviews]);
+
+  const allPreviewUrls = useMemo(
+    () => [
+      ...existingImages.map((img) => getFilePreview(img).toString()),
+      ...filePreviews,
+    ],
+    [existingImages, filePreviews]
+  );
 
   useEffect(() => {
     if (isEdit) {
       getListingById(listingId).then(data => {
         setForm({ title: data.title || "", rent: data.rent || "", location: data.location || "", description: data.description || "", preferences: data.preferences || "" });
         setAmenities(data.amenities ? data.amenities.split(",").map(a => a.trim()) : []);
+        setExistingImages(data.images || []);
         if (data.isAvailable !== undefined) setIsAvailable(data.isAvailable);
       });
     }
@@ -56,28 +80,48 @@ export default function CreateListing() {
     );
   };
 
+  const handleFileSelect = (e) => {
+    const selected = Array.from(e.target.files || []);
+    if (selected.length === 0) return;
+
+    const remainingSlots = MAX_IMAGES - (existingImages.length + files.length);
+    if (remainingSlots <= 0) {
+      toast.error(`Maximum ${MAX_IMAGES} images allowed per listing`);
+      e.target.value = "";
+      return;
+    }
+
+    const toAdd = selected.slice(0, remainingSlots);
+    if (selected.length > remainingSlots) {
+      toast.error(`Only ${MAX_IMAGES} images allowed. Added ${toAdd.length} more.`);
+    }
+    setFiles((prev) => [...prev, ...toAdd]);
+    e.target.value = "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title || !form.rent || !form.location) { toast.error("Fill required fields"); return; }
     setLoading(true);
     try {
-      let imageUrls = form.images || [];
+      let uploadedUrls = [];
       if (files.length > 0) {
         toast.loading("Uploading images...");
-        imageUrls = await uploadImages(files);
+        uploadedUrls = await uploadImages(files);
         toast.dismiss();
       }
+      const imageUrls = [...existingImages, ...uploadedUrls].slice(0, MAX_IMAGES);
       const data = { 
         title: form.title, 
         rent: Number(form.rent), 
         location: form.location, 
         userId: user.$id,
-        isAvailable
+        isAvailable,
+        images: imageUrls,
       };
       if (form.description) data.description = form.description;
       if (form.preferences) data.preferences = form.preferences;
       if (amenities.length > 0) data.amenities = amenities.join(", ");
-      if (imageUrls.length > 0) data.images = imageUrls;
       if (isEdit) {
         await updateListing(listingId, data);
         toast.success("Listing updated");
@@ -166,7 +210,8 @@ export default function CreateListing() {
               <LocationAutocomplete 
                 value={form.location} 
                 onChange={(val) => setForm(f => ({ ...f, location: val }))} 
-                placeholder="e.g. Koramangala, Bangalore" 
+                placeholder="e.g. Koramangala, Bangalore"
+                showCurrentLocation
               />
             </Field>
 
@@ -196,47 +241,88 @@ export default function CreateListing() {
               </div>
             </Field>
 
-            <Field label="Photos">
-              <div style={{
-                border: "2px dashed var(--bdr)", borderRadius: 12, padding: "24px",
-                textAlign: "center", cursor: "pointer", transition: "border-color 0.2s ease",
-                background: "var(--sur2)",
-                marginBottom: files.length > 0 ? 12 : 0
-              }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--p)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--bdr)"; }}
-              >
-                <input type="file" multiple accept="image/*" onChange={e => setFiles(Array.from(e.target.files))} style={{ display: "none" }} id="photos" />
-                <label htmlFor="photos" style={{ cursor: "pointer", display: "block" }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>📷</div>
-                  <p style={{ color: "var(--tx2)", fontSize: "0.875rem", margin: 0 }}>
-                    {files.length > 0 ? "Click to change photos" : "Click to upload photos"}
-                  </p>
-                </label>
-              </div>
+            <Field label={`Photos (${allPreviewUrls.length}/${MAX_IMAGES})`}>
+              {allPreviewUrls.length < MAX_IMAGES && (
+                <div
+                  style={{
+                    border: "2px dashed var(--bdr)", borderRadius: 12, padding: "20px",
+                    textAlign: "center", cursor: "pointer", transition: "border-color 0.2s ease",
+                    background: "var(--sur2)",
+                    marginBottom: allPreviewUrls.length > 0 ? 12 : 0,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--p)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--bdr)"; }}
+                >
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleFileSelect}
+                    style={{ display: "none" }}
+                    id="photos"
+                  />
+                  <label htmlFor="photos" style={{ cursor: "pointer", display: "block" }}>
+                    <div style={{ fontSize: 28, marginBottom: 6 }}>📷</div>
+                    <p style={{ color: "var(--tx2)", fontSize: "0.875rem", margin: 0 }}>
+                      {allPreviewUrls.length > 0
+                        ? `Add more photos (${MAX_IMAGES - allPreviewUrls.length} remaining)`
+                        : `Click to upload 1 to ${MAX_IMAGES} photos`}
+                    </p>
+                  </label>
+                </div>
+              )}
 
-              {files.length > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: 12, marginTop: 12 }}>
-                  {files.map((file, i) => (
-                    <div key={i} style={{ position: "relative", paddingTop: "100%", borderRadius: 12, overflow: "hidden", border: "1px solid var(--bdr)", boxShadow: "var(--sh1)" }}>
-                      <img 
-                        src={URL.createObjectURL(file)} 
-                        alt="preview" 
-                        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} 
-                      />
-                      <button 
-                        type="button"
-                        onClick={() => setFiles(files.filter((_, index) => index !== i))}
-                        style={{
-                          position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", color: "white",
-                          border: "none", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center",
-                          cursor: "pointer", fontSize: 10, backdropFilter: "blur(4px)"
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+              {allPreviewUrls.length > 0 && (
+                <div className="space-y-3 mt-3">
+                  <ImageCarousel
+                    images={allPreviewUrls}
+                    alt="Listing preview"
+                    height="h-[220px]"
+                    rounded="rounded-xl"
+                  />
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))", gap: 10 }}>
+                    {existingImages.map((img, i) => (
+                      <div key={`existing-${i}`} style={{ position: "relative", paddingTop: "100%", borderRadius: 12, overflow: "hidden", border: "1px solid var(--bdr)", boxShadow: "var(--sh1)" }}>
+                        <img
+                          src={getFilePreview(img).toString()}
+                          alt="existing"
+                          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setExistingImages(existingImages.filter((_, idx) => idx !== i))}
+                          style={{
+                            position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "white",
+                            border: "none", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", fontSize: 10, backdropFilter: "blur(4px)"
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    {filePreviews.map((url, i) => (
+                      <div key={`new-${i}`} style={{ position: "relative", paddingTop: "100%", borderRadius: 12, overflow: "hidden", border: "1px solid var(--bdr)", boxShadow: "var(--sh1)" }}>
+                        <img
+                          src={url}
+                          alt="preview"
+                          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFiles(files.filter((_, index) => index !== i))}
+                          style={{
+                            position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "white",
+                            border: "none", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", fontSize: 10, backdropFilter: "blur(4px)"
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </Field>

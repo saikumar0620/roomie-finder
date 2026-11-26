@@ -11,7 +11,7 @@ router.use(uploadLimiter);
 router.post(
   "/images",
   requireAuth,
-  upload.array("images", 6),
+  upload.array("images", 5),
   asyncHandler(async (req, res) => {
     if (!req.files?.length) {
       throw new HttpError(400, "At least one image file is required");

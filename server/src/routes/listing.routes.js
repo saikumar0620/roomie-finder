@@ -27,7 +27,7 @@ const listingCreateSchema = z.object({
   description: z.string().max(3000).optional().default(""),
   preferences: z.string().max(200).optional().default(""),
   amenities: amenitiesField,
-  images: z.array(z.string().trim()).optional().default([]),
+  images: z.array(z.string().trim()).max(5, "Maximum 5 images allowed").optional().default([]),
   isAvailable: z.boolean().optional().default(true),
 });
 
