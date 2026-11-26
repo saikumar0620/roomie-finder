@@ -15,6 +15,14 @@ const AMENITIES_LIST = [
 
 const RADIUS_OPTIONS = [2, 5, 10];
 
+const PRICE_RANGES = [
+  { label: "All Prices", min: "", max: "" },
+  { label: "Under ₹8k", min: "", max: "8000" },
+  { label: "₹8k – ₹15k", min: "8000", max: "15000" },
+  { label: "₹15k – ₹25k", min: "15000", max: "25000" },
+  { label: "₹25k+", min: "25000", max: "" },
+];
+
 export default function Filters({
   onApply,
   showNearMe = false,
@@ -29,12 +37,14 @@ export default function Filters({
   const [location, setLocation] = useState("");
   const [preferences, setPreferences] = useState("");
   const [amenities, setAmenities] = useState([]);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
   const activeAdvancedCount =
     (minRent ? 1 : 0) +
     (maxRent ? 1 : 0) +
     (preferences ? 1 : 0) +
+    (verifiedOnly ? 1 : 0) +
     amenities.length;
 
   const toggleAmenity = (amenity) => {
@@ -45,9 +55,29 @@ export default function Filters({
     );
   };
 
+  const handleSelectPriceRange = (range) => {
+    setMinRent(range.min);
+    setMaxRent(range.max);
+    onApply({
+      minRent: range.min,
+      maxRent: range.max,
+      location,
+      preferences,
+      amenities,
+      verifiedOnly: verifiedOnly ? "true" : undefined,
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onApply({ minRent, maxRent, location, preferences, amenities });
+    onApply({
+      minRent,
+      maxRent,
+      location,
+      preferences,
+      amenities,
+      verifiedOnly: verifiedOnly ? "true" : undefined,
+    });
   };
 
   const handleReset = () => {
@@ -56,6 +86,7 @@ export default function Filters({
     setLocation("");
     setPreferences("");
     setAmenities([]);
+    setVerifiedOnly(false);
     onApply({});
   };
 
@@ -148,8 +179,33 @@ export default function Filters({
         </div>
       )}
 
+      {/* Quick Price Range Pills (always visible on mobile & desktop) */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar pb-0.5">
+        <span className="text-xs font-semibold shrink-0" style={{ color: "var(--tx2)" }}>
+          💰 Budget:
+        </span>
+        {PRICE_RANGES.map((range) => {
+          const isSelected = minRent === range.min && maxRent === range.max;
+          return (
+            <button
+              key={range.label}
+              type="button"
+              onClick={() => handleSelectPriceRange(range)}
+              className="shrink-0 whitespace-nowrap text-xs font-semibold px-3 py-1.5 rounded-full cursor-pointer border transition-all"
+              style={{
+                background: isSelected ? "var(--p)" : "var(--sur2)",
+                color: isSelected ? "#fff" : "var(--tx2)",
+                borderColor: isSelected ? "var(--p)" : "var(--bdr)",
+              }}
+            >
+              {range.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-        <div className="sm:col-span-2 lg:col-span-4 order-1 lg:order-3">
+        <div className="sm:col-span-2 lg:col-span-3 order-1 lg:order-3">
           <label className="lbl">Location</label>
           <LocationAutocomplete
             value={location}
@@ -198,14 +254,17 @@ export default function Filters({
           </select>
         </div>
 
-        <div className="lg:col-span-2 flex gap-2 order-2 lg:order-5">
-          <button type="submit" className="btn btn-p flex-1 justify-center">
+        <div className="sm:col-span-2 lg:col-span-3 flex items-center gap-2 order-2 lg:order-5">
+          <button
+            type="submit"
+            className="btn btn-p flex-1 h-[46px] px-4 whitespace-nowrap justify-center"
+          >
             Search
           </button>
           <button
             type="button"
             onClick={() => setMobileExpanded((v) => !v)}
-            className="btn btn-o sm:hidden justify-center px-3"
+            className="btn btn-o sm:hidden h-[46px] px-3.5 whitespace-nowrap justify-center"
             style={{
               borderColor: activeAdvancedCount > 0 ? "var(--p)" : "var(--bdr)",
               color: activeAdvancedCount > 0 ? "var(--p)" : "var(--tx)",
@@ -215,7 +274,9 @@ export default function Filters({
           </button>
           <button
             type="button"
-            className={`btn btn-o justify-center ${mobileExpanded ? "inline-flex" : "hidden sm:inline-flex"}`}
+            className={`btn btn-o h-[46px] px-4 whitespace-nowrap justify-center ${
+              mobileExpanded ? "inline-flex" : "hidden sm:inline-flex"
+            }`}
             onClick={handleReset}
           >
             Reset
@@ -224,7 +285,32 @@ export default function Filters({
       </div>
 
       <div className={`mt-4 ${mobileExpanded ? "block" : "hidden sm:block"}`}>
-        <label className="lbl mb-2 block">Amenities</label>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <label className="lbl mb-0">Amenities &amp; Trust</label>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !verifiedOnly;
+              setVerifiedOnly(next);
+              onApply({
+                minRent,
+                maxRent,
+                location,
+                preferences,
+                amenities,
+                verifiedOnly: next ? "true" : undefined,
+              });
+            }}
+            className="text-xs font-semibold px-3 py-1 rounded-full cursor-pointer transition-all border"
+            style={{
+              background: verifiedOnly ? "rgba(16,185,129,0.14)" : "var(--sur2)",
+              color: verifiedOnly ? "#059669" : "var(--tx2)",
+              borderColor: verifiedOnly ? "#10b981" : "var(--bdr)",
+            }}
+          >
+            ✓ Verified Hosts Only
+          </button>
+        </div>
         <div className="flex flex-nowrap overflow-x-auto no-scrollbar sm:flex-wrap gap-2 pb-1">
           {AMENITIES_LIST.map(({ id, icon }) => (
             <label

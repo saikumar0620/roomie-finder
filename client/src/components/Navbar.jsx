@@ -332,20 +332,24 @@ export default function Navbar() {
         )}
       </div>
 
+      </nav>
+
       {showLogoutConfirm && (
         <div
           onClick={() => setShowLogoutConfirm(false)}
           className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
           style={{
-            background: "rgba(0,0,0,0.45)",
+            background: "rgba(0,0,0,0.5)",
             backdropFilter: "blur(4px)",
-            animation: "fadeUp 0.2s ease",
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="auth-card fade-up w-full sm:w-auto sm:min-w-[360px] max-w-none sm:max-w-[420px] rounded-t-3xl sm:rounded-2xl text-center px-6 pt-3 sm:pt-8"
+            className="fade-up w-full sm:w-[400px] rounded-t-3xl sm:rounded-2xl text-center px-6 pt-3 sm:pt-8"
             style={{
+              background: "var(--sur)",
+              border: "1px solid var(--bdr)",
+              boxShadow: "var(--sh3)",
               paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))",
             }}
           >
@@ -378,7 +382,6 @@ export default function Navbar() {
           </div>
         </div>
       )}
-      </nav>
 
       {/* Mobile Bottom Navigation Bar */}
       {!isChatThread && (

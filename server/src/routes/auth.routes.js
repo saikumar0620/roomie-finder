@@ -14,7 +14,10 @@ import {
 } from "../middleware/auth.js";
 import { asyncHandler, HttpError } from "../middleware/errorHandler.js";
 import { authLimiter } from "../middleware/rateLimit.js";
-import { sendPasswordResetEmail } from "../services/email.service.js";
+import {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+} from "../services/email.service.js";
 import { serializeUser } from "../utils/serializers.js";
 
 const router = Router();
@@ -203,6 +206,80 @@ router.post(
     ]);
 
     res.json({ ok: true, message: "Password updated! Please sign in." });
+  })
+);
+
+router.post(
+  "/send-verification",
+  requireAuth,
+  authLimiter,
+  asyncHandler(async (req, res) => {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, email: true, name: true, isVerified: true },
+    });
+    if (!user) throw new HttpError(404, "User not found");
+    if (user.isVerified) {
+      return res.json({ ok: true, alreadyVerified: true });
+    }
+
+    const code = String(crypto.randomInt(100000, 999999));
+    const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+
+    await prisma.$transaction([
+      prisma.emailVerification.deleteMany({ where: { userId: user.id } }),
+      prisma.emailVerification.create({
+        data: {
+          userId: user.id,
+          codeHash,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        },
+      }),
+    ]);
+
+    await sendVerificationEmail({
+      toEmail: user.email,
+      toName: user.name,
+      code,
+    });
+
+    res.json({ ok: true, message: "Verification code sent to your email." });
+  })
+);
+
+router.post(
+  "/verify-email",
+  requireAuth,
+  authLimiter,
+  asyncHandler(async (req, res) => {
+    const code = String(req.body?.code || "").trim();
+    if (!/^\d{6}$/.test(code)) {
+      throw new HttpError(400, "Please enter a valid 6-digit code");
+    }
+
+    const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+    const record = await prisma.emailVerification.findFirst({
+      where: {
+        userId: req.user.id,
+        codeHash,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!record) {
+      throw new HttpError(400, "Invalid or expired verification code");
+    }
+
+    const [updatedUser] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: req.user.id },
+        data: { isVerified: true, verifiedAt: new Date() },
+      }),
+      prisma.emailVerification.deleteMany({ where: { userId: req.user.id } }),
+    ]);
+
+    res.json({ user: serializeUser(updatedUser) });
   })
 );
 

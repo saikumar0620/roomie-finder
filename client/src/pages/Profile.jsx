@@ -9,9 +9,10 @@ import { Link } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { getProfile } from "../services/profile.service";
 import { getFilePreview } from "../services/listing.service";
+import { sendVerificationCode, verifyEmailCode } from "../services/auth.service";
 
 export default function Profile() {
-  const { user } = useAuthStore();
+  const { user, checkAuth } = useAuthStore();
   const queryClient = useQueryClient();
   const { data: listings = [], refetch } = useUserListings();
   const { data: favoriteListings = [] } = useFavoriteListings();
@@ -19,6 +20,40 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("listings");
   const [loadingId, setLoadingId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+
+  const handleSendVerification = async () => {
+    setVerifying(true);
+    try {
+      await sendVerificationCode();
+      setOtpSent(true);
+      toast.success("6-digit verification code sent to your email!");
+    } catch (err) {
+      toast.error(err.message || "Failed to send verification code");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    setVerifying(true);
+    try {
+      await verifyEmailCode(otpCode);
+      await checkAuth();
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      queryClient.invalidateQueries({ queryKey: ["roommates"] });
+      setOtpSent(false);
+      setOtpCode("");
+      toast.success("Account verified! You now have the ✓ Verified badge.");
+    } catch (err) {
+      toast.error(err.message || "Invalid or expired code");
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.$id],
@@ -75,10 +110,76 @@ export default function Profile() {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl m-0 mb-1 break-words">{profile?.name || user?.name}</h1>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h1 className="text-xl sm:text-2xl m-0 break-words">{profile?.name || user?.name}</h1>
+                {user?.isVerified ? (
+                  <span
+                    className="text-xs font-bold px-2.5 py-0.5 rounded-full"
+                    style={{ background: "rgba(16,185,129,0.14)", color: "#059669" }}
+                  >
+                    ✓ Verified
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSendVerification}
+                    disabled={verifying}
+                    className="text-xs font-semibold px-2.5 py-0.5 rounded-full border cursor-pointer"
+                    style={{ background: "var(--p-l)", color: "var(--p)", borderColor: "var(--p)" }}
+                  >
+                    {verifying ? "Sending..." : "✓ Get Verified"}
+                  </button>
+                )}
+              </div>
               <p className="text-sm sm:text-[0.9375rem] m-0 mb-3 break-all" style={{ color: "var(--tx2)" }}>
                 {user?.email}
               </p>
+
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {profile?.upiId ? (
+                  <span
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border"
+                    style={{
+                      background: "rgba(16,185,129,0.12)",
+                      color: "#059669",
+                      borderColor: "rgba(16,185,129,0.35)",
+                    }}
+                  >
+                    💳 UPI: <strong>{profile.upiId}</strong>
+                  </span>
+                ) : (
+                  <Link
+                    to="/profile/edit"
+                    className="no-underline inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-full border transition-transform hover:scale-[1.02]"
+                    style={{
+                      background: "var(--p-l)",
+                      color: "var(--p)",
+                      borderColor: "var(--p)",
+                      boxShadow: "0 2px 10px var(--p-glow)",
+                    }}
+                  >
+                    💳 + Add UPI ID for settlements →
+                  </Link>
+                )}
+              </div>
+
+              {otpSent && !user?.isVerified && (
+                <form onSubmit={handleVerifyCode} className="flex flex-wrap items-center gap-2 mb-3">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Enter 6-digit code"
+                    className="inp w-40 py-1.5 text-sm"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    required
+                  />
+                  <button type="submit" disabled={verifying} className="btn btn-p text-xs py-2 px-3">
+                    {verifying ? "Checking..." : "Verify"}
+                  </button>
+                </form>
+              )}
 
               {profile?.bio && (
                 <p className="text-sm sm:text-[0.9375rem] leading-relaxed mb-3 break-words" style={{ color: "var(--tx)" }}>

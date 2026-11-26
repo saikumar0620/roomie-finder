@@ -161,12 +161,34 @@ export default function ListingDetails() {
       )}
 
       {/* Description */}
-      {data.description && (
-        <div style={{ background: "var(--sur)", border: "1px solid var(--bdr)", borderRadius: 16, padding: "24px", marginBottom: 24 }}>
-          <h2 style={{ fontSize: "1.0625rem", marginBottom: 12 }}>About this place</h2>
-          <p style={{ color: "var(--tx2)", lineHeight: 1.7, margin: 0, fontSize: "0.9375rem", whiteSpace: "pre-wrap" }}>{data.description}</p>
+      <div style={{ background: "var(--sur)", border: "1px solid var(--bdr)", borderRadius: 16, padding: "20px 24px", marginBottom: 24 }}>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold" style={{ color: "var(--tx)" }}>
+              Host: {data.ownerName || "Owner"}
+            </span>
+            {data.ownerVerified && (
+              <span
+                className="text-xs font-bold px-2.5 py-0.5 rounded-full"
+                style={{ background: "rgba(16,185,129,0.14)", color: "#059669" }}
+              >
+                ✓ Verified Host
+              </span>
+            )}
+          </div>
+          {data.ownerResponseLabel && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: "var(--sur2)", color: "var(--tx2)" }}>
+              💬 {data.ownerResponseLabel}
+            </span>
+          )}
         </div>
-      )}
+        {data.description && (
+          <>
+            <h2 style={{ fontSize: "1.0625rem", margin: "12px 0 8px" }}>About this place</h2>
+            <p style={{ color: "var(--tx2)", lineHeight: 1.7, margin: 0, fontSize: "0.9375rem", whiteSpace: "pre-wrap" }}>{data.description}</p>
+          </>
+        )}
+      </div>
 
       {/* Map View */}
       {(data.location || (data.latitude && data.longitude)) && (

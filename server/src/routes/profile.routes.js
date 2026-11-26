@@ -32,10 +32,14 @@ router.get(
       maxLimit: 50,
     });
     const where = { lookingForRoom: true };
+    if (req.query.verifiedOnly === "true") {
+      where.user = { isVerified: true };
+    }
 
     const [profiles, total] = await prisma.$transaction([
       prisma.profile.findMany({
         where,
+        include: { user: { select: { isVerified: true } } },
         orderBy: { updatedAt: "desc" },
         take: limit,
         skip,
@@ -55,6 +59,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const profile = await prisma.profile.findUnique({
       where: { userId: req.params.userId },
+      include: { user: { select: { isVerified: true } } },
     });
     if (!profile) {
       throw new HttpError(404, "Profile not found");

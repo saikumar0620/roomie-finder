@@ -3,6 +3,7 @@ export const serializeUser = (row) => ({
   id: row.id,
   email: row.email,
   name: row.name,
+  isVerified: Boolean(row.isVerified),
   $createdAt: row.createdAt,
 });
 
@@ -17,6 +18,7 @@ export const serializeProfile = (row) => ({
   avatarUrl: row.avatarUrl,
   upiId: row.upiId ?? null,
   lookingForRoom: row.lookingForRoom,
+  isVerified: Boolean(row.user?.isVerified ?? row.isVerified),
   $createdAt: row.createdAt,
   $updatedAt: row.updatedAt,
 });
@@ -43,6 +45,7 @@ export const serializeListing = (row) => ({
   isAvailable: row.isAvailable ?? row.is_available,
   ownerName: row.user?.profile?.name ?? row.user?.name,
   ownerAvatarUrl: row.user?.profile?.avatarUrl ?? null,
+  ownerVerified: Boolean(row.user?.isVerified ?? row.owner_verified ?? false),
   $createdAt: row.createdAt ?? row.created_at,
   $updatedAt: row.updatedAt ?? row.updated_at,
 });

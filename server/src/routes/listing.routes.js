@@ -121,28 +121,33 @@ router.get(
           .filter(Boolean);
         if (amenList.length > 0) {
           values.push(amenList);
-          extraConditions.push(`amenities @> $${values.length}::text[]`);
+          extraConditions.push(`l.amenities @> $${values.length}::text[]`);
         }
+      }
+      if (req.query.verifiedOnly === "true") {
+        extraConditions.push(`u.is_verified = true`);
       }
 
       values.push(radiusKm);
       const radiusParam = `$${values.length}`;
 
       const whereSql = [
-        `is_available = true`,
-        `latitude IS NOT NULL`,
-        `longitude IS NOT NULL`,
-        `latitude BETWEEN $3 AND $4`,
-        `longitude BETWEEN $5 AND $6`,
-        ...extraConditions,
+        `l.is_available = true`,
+        `l.latitude IS NOT NULL`,
+        `l.longitude IS NOT NULL`,
+        `l.latitude BETWEEN $3 AND $4`,
+        `l.longitude BETWEEN $5 AND $6`,
+        ...extraConditions.map((c) =>
+          c.replace(/^(rent|location|preferences)\b/, "l.$1")
+        ),
       ].join(" AND ");
 
       const haversineSql = `
         6371 * acos(
           LEAST(1.0, GREATEST(-1.0,
-            cos(radians($1)) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians($2)) +
-            sin(radians($1)) * sin(radians(latitude))
+            cos(radians($1)) * cos(radians(l.latitude)) *
+            cos(radians(l.longitude) - radians($2)) +
+            sin(radians($1)) * sin(radians(l.latitude))
           ))
         )
       `;
@@ -150,8 +155,9 @@ router.get(
       const countRows = await prisma.$queryRawUnsafe(
         `SELECT COUNT(*)::int AS total
          FROM (
-           SELECT id, (${haversineSql}) AS distance_km
-           FROM roomie_finder.listings
+           SELECT l.id, (${haversineSql}) AS distance_km
+           FROM roomie_finder.listings l
+           JOIN roomie_finder.users u ON u.id = l.user_id
            WHERE ${whereSql}
          ) sub
          WHERE distance_km <= ${radiusParam}`,
@@ -163,11 +169,13 @@ router.get(
       const offsetParam = `$${values.length + 2}`;
       const rows = await prisma.$queryRawUnsafe(
         `SELECT * FROM (
-           SELECT id, user_id, title, rent, location, latitude, longitude,
-                  description, preferences, amenities, images, is_available,
-                  created_at, updated_at,
+           SELECT l.id, l.user_id, l.title, l.rent, l.location, l.latitude, l.longitude,
+                  l.description, l.preferences, l.amenities, l.images, l.is_available,
+                  l.created_at, l.updated_at,
+                  u.is_verified AS owner_verified,
                   (${haversineSql}) AS distance_km
-           FROM roomie_finder.listings
+           FROM roomie_finder.listings l
+           JOIN roomie_finder.users u ON u.id = l.user_id
            WHERE ${whereSql}
          ) sub
          WHERE distance_km <= ${radiusParam}
@@ -212,9 +220,14 @@ router.get(
       }
     }
 
+    if (req.query.verifiedOnly === "true") {
+      where.user = { isVerified: true };
+    }
+
     const [rows, total] = await prisma.$transaction([
       prisma.listing.findMany({
         where,
+        include: { user: { select: { isVerified: true } } },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: limit,
         skip,
@@ -253,6 +266,7 @@ router.get(
         user: {
           select: {
             name: true,
+            isVerified: true,
             profile: { select: { name: true, avatarUrl: true } },
           },
         },
@@ -261,7 +275,26 @@ router.get(
     if (!listing) {
       throw new HttpError(404, "Listing not found");
     }
-    res.json({ listing: serializeListing(listing) });
+
+    const lastMsg = await prisma.message.findFirst({
+      where: { senderId: listing.userId },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+
+    let ownerResponseLabel = "New host";
+    if (lastMsg) {
+      const hoursAgo = (Date.now() - new Date(lastMsg.createdAt).getTime()) / 3600000;
+      ownerResponseLabel =
+        hoursAgo <= 24 ? "Active today" : "Replies within a few days";
+    }
+
+    res.json({
+      listing: {
+        ...serializeListing(listing),
+        ownerResponseLabel,
+      },
+    });
   })
 );
 

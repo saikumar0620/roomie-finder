@@ -107,9 +107,9 @@ export default function SettlementSummary({ expenses, shares, members }) {
                 {amIOwing && (
                   <button
                     onClick={() => handlePayNow(t)}
-                    className="btn btn-p text-xs py-1.5 px-3 rounded-lg shadow-sm transition-all"
+                    className="btn btn-p text-xs py-1.5 px-3 rounded-lg shadow-sm transition-all whitespace-nowrap"
                   >
-                    Pay via UPI
+                    Pay ₹{Math.round(t.amount)} via UPI
                   </button>
                 )}
               </div>
@@ -143,11 +143,21 @@ export default function SettlementSummary({ expenses, shares, members }) {
             <p className="text-xs mb-4" style={{ color: 'var(--tx3)' }}>
               Scan with GPay / PhonePe / Paytm, or tap below on mobile.
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <a href={upiModal.upiUri} className="btn btn-p flex-1 justify-center no-underline text-sm">
                 Open UPI App
               </a>
-              <button type="button" onClick={() => setUpiModal(null)} className="btn btn-o text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(upiModal.upiId);
+                  toast.success(`Copied ${upiModal.upiId}`);
+                }}
+                className="btn btn-o text-sm px-3"
+              >
+                Copy UPI
+              </button>
+              <button type="button" onClick={() => setUpiModal(null)} className="btn btn-o text-sm px-3">
                 Close
               </button>
             </div>

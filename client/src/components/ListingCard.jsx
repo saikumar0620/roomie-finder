@@ -83,13 +83,26 @@ export default function ListingCard({ listing }) {
 
         {/* Body */}
         <div style={{ padding: "16px 20px 20px" }}>
-          <h3 style={{
-            margin: 0, fontSize: "1rem", fontWeight: 600,
-            color: "var(--tx)", letterSpacing: "-0.01em",
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-          }}>
-            {listing.title}
-          </h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 style={{
+              margin: 0, fontSize: "1rem", fontWeight: 600,
+              color: "var(--tx)", letterSpacing: "-0.01em",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            }}>
+              {listing.title}
+            </h3>
+            {listing.ownerVerified && (
+              <span
+                className="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full"
+                style={{
+                  background: "rgba(16,185,129,0.14)",
+                  color: "#059669",
+                }}
+              >
+                ✓ Verified
+              </span>
+            )}
+          </div>
           <p style={{ margin: "4px 0 12px", fontSize: "0.8125rem", color: "var(--tx2)", display: "flex", alignItems: "center", gap: 4 }}>
             📍 {listing.location}
           </p>

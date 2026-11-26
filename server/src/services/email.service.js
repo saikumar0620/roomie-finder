@@ -238,3 +238,25 @@ export async function sendVisitRequestEmail({
   `;
   return deliverEmail({ toEmail, toName, subject, htmlContent });
 }
+
+/**
+ * Send a 6-digit account verification OTP code.
+ */
+export async function sendVerificationEmail({ toEmail, toName, code }) {
+  const subject = `${code} is your Roomie Finder verification code`;
+  const htmlContent = `
+    <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;border:1px solid #f3d6dc;border-radius:16px;background:#fffbfb;">
+      <h2 style="color:#E11D48;margin-top:0;">✓ Verify your Roomie Finder account</h2>
+      <p style="color:#1C0A0F;font-size:15px;line-height:1.6;">
+        Hi <strong>${toName}</strong>,
+      </p>
+      <p style="color:#6B5B5F;font-size:15px;line-height:1.6;">
+        Enter this 6-digit code in your Profile to earn your <strong>Verified</strong> badge (expires in 15 minutes):
+      </p>
+      <div style="margin:20px 0;padding:16px;background:#ffffff;border:1px solid #f3d6dc;border-radius:12px;text-align:center;font-size:28px;font-weight:700;letter-spacing:6px;color:#E11D48;">
+        ${code}
+      </div>
+    </div>
+  `;
+  return deliverEmail({ toEmail, toName, subject, htmlContent });
+}

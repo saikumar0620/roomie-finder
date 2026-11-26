@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getRoommatesWanted, getProfile } from "../services/profile.service";
 import { getFilePreview } from "../services/listing.service";
@@ -8,10 +9,11 @@ import { getOrCreateConversation } from "../services/chat.service";
 export default function Roommates() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
 
   const { data: profiles = [], isLoading } = useQuery({
-    queryKey: ["roommates"],
-    queryFn: getRoommatesWanted,
+    queryKey: ["roommates", verifiedOnly],
+    queryFn: () => getRoommatesWanted(verifiedOnly),
   });
 
   const { data: myProfile } = useQuery({
@@ -55,6 +57,20 @@ export default function Roommates() {
         <p style={{ color: "var(--tx2)", fontSize: "1rem", maxWidth: 480, margin: "0 auto" }}>
           Have an extra room? Browse through people who are actively looking for a roommate.
         </p>
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setVerifiedOnly((v) => !v)}
+            className="text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full cursor-pointer border transition-all"
+            style={{
+              background: verifiedOnly ? "rgba(16,185,129,0.14)" : "var(--sur)",
+              color: verifiedOnly ? "#059669" : "var(--tx2)",
+              borderColor: verifiedOnly ? "#10b981" : "var(--bdr)",
+            }}
+          >
+            ✓ Verified Roommates Only
+          </button>
+        </div>
       </div>
 
       {isLoading && (
@@ -112,8 +128,16 @@ export default function Roommates() {
                         </span>
                       )}
                     </div>
-                    <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--tx2)", display: "flex", alignItems: "center", gap: 4 }}>
-                      📍 Seeking a Room
+                    <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--tx2)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <span>📍 Seeking a Room</span>
+                      {prof.isVerified && (
+                        <span
+                          className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: "rgba(16,185,129,0.14)", color: "#059669" }}
+                        >
+                          ✓ Verified
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>

@@ -33,7 +33,9 @@ export const uploadAvatar = async (file) => {
   return data.url;
 };
 
-export const getRoommatesWanted = async () => {
-  const { data } = await api.get("/profiles/roommates");
+export const getRoommatesWanted = async (verifiedOnly = false) => {
+  const { data } = await api.get("/profiles/roommates", {
+    params: verifiedOnly ? { verifiedOnly: "true" } : undefined,
+  });
   return data.profiles;
 };
