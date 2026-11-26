@@ -36,7 +36,10 @@ function uploadToCloudinary(buffer, folder) {
         resource_type: "image",
       },
       (error, result) => {
-        if (error) return reject(error);
+        if (error) {
+          console.error("Cloudinary upload error:", error.message || error);
+          return reject(new Error(`Image upload failed: ${error.message || "Cloudinary error"}`));
+        }
         return resolve(result.secure_url);
       }
     );

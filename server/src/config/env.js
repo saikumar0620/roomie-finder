@@ -12,9 +12,9 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET || "dev_only_secret_change_in_production",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   cloudinary: {
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
-    apiKey: process.env.CLOUDINARY_API_KEY || "",
-    apiSecret: process.env.CLOUDINARY_API_SECRET || "",
+    cloudName: (process.env.CLOUDINARY_CLOUD_NAME || "").trim(),
+    apiKey: (process.env.CLOUDINARY_API_KEY || "").trim(),
+    apiSecret: (process.env.CLOUDINARY_API_SECRET || "").trim(),
   },
 };
 
