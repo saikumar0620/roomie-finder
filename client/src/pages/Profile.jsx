@@ -75,7 +75,7 @@ export default function Profile() {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl m-0 mb-1 break-words">{user?.name}</h1>
+              <h1 className="text-xl sm:text-2xl m-0 mb-1 break-words">{profile?.name || user?.name}</h1>
               <p className="text-sm sm:text-[0.9375rem] m-0 mb-3 break-all" style={{ color: "var(--tx2)" }}>
                 {user?.email}
               </p>

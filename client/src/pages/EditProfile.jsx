@@ -3,11 +3,13 @@ import { useAuthStore } from "../store/useAuthStore";
 import { getProfile, upsertProfile, uploadAvatar } from "../services/profile.service";
 import { getFilePreview } from "../services/listing.service";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 export default function EditProfile() {
-  const { user } = useAuthStore();
+  const { user, updateUserName } = useAuthStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(false);
   const [profileId, setProfileId] = useState(null);
@@ -17,7 +19,7 @@ export default function EditProfile() {
   const [avatarFile, setAvatarFile] = useState(null);
 
   useEffect(() => {
-    if (user) {
+    if (user?.$id) {
       getProfile(user.$id).then(prof => {
         if (prof) {
           setProfileId(prof.$id);
@@ -31,7 +33,7 @@ export default function EditProfile() {
         }
       });
     }
-  }, [user]);
+  }, [user?.$id]);
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
 
@@ -59,7 +61,12 @@ export default function EditProfile() {
         data.avatarId = finalAvatarId;
       }
 
-      await upsertProfile(user.$id, data, profileId);
+      const savedProfile = await upsertProfile(user.$id, data, profileId);
+      updateUserName(data.name);
+      queryClient.setQueryData(["profile", user.$id], savedProfile);
+      queryClient.invalidateQueries({ queryKey: ["profile", user.$id] });
+      queryClient.invalidateQueries({ queryKey: ["roommates"] });
+      queryClient.invalidateQueries({ queryKey: ["room_dashboard"] });
       toast.success("Profile saved successfully!");
       navigate("/profile");
     } catch (err) {

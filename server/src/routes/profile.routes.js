@@ -63,24 +63,30 @@ router.put(
     const data = upsertProfileSchema.parse(req.body);
     const avatar = data.avatarUrl ?? data.avatarId;
 
-    const profile = await prisma.profile.upsert({
-      where: { userId: req.user.id },
-      create: {
-        userId: req.user.id,
-        name: data.name,
-        bio: data.bio,
-        habits: data.habits,
-        avatarUrl: avatar ?? null,
-        lookingForRoom: data.lookingForRoom,
-      },
-      update: {
-        name: data.name,
-        bio: data.bio,
-        habits: data.habits,
-        lookingForRoom: data.lookingForRoom,
-        ...(avatar !== undefined ? { avatarUrl: avatar } : {}),
-      },
-    });
+    const [profile] = await prisma.$transaction([
+      prisma.profile.upsert({
+        where: { userId: req.user.id },
+        create: {
+          userId: req.user.id,
+          name: data.name,
+          bio: data.bio,
+          habits: data.habits,
+          avatarUrl: avatar ?? null,
+          lookingForRoom: data.lookingForRoom,
+        },
+        update: {
+          name: data.name,
+          bio: data.bio,
+          habits: data.habits,
+          lookingForRoom: data.lookingForRoom,
+          ...(avatar !== undefined ? { avatarUrl: avatar } : {}),
+        },
+      }),
+      prisma.user.update({
+        where: { id: req.user.id },
+        data: { name: data.name },
+      }),
+    ]);
 
     res.json({ profile: serializeProfile(profile) });
   })
