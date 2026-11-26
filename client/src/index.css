@@ -98,12 +98,14 @@ h1,h2,h3,h4,h5,h6 {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 @media (max-width: 640px) {
   .wrap {
-    padding: 0 16px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
   .section-title {
     font-size: 1.25rem;

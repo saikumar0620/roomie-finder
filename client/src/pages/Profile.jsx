@@ -47,7 +47,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="wrap fade-up py-6 sm:py-10">
+    <div className="wrap fade-up pt-8 pb-14 sm:pt-12 sm:pb-16">
       {/* Profile card */}
       <div
         className="p-5 sm:p-8 mb-8 sm:mb-10"
