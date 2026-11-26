@@ -1,19 +1,24 @@
 import { useParams } from "react-router-dom";
 import { useMessages } from "../hooks/useMessages";
 import { useState, useRef, useEffect } from "react";
-import { sendMessage, getUserConversations } from "../services/chat.service";
+import { sendMessage, getUserConversations, markConversationRead } from "../services/chat.service";
 import { useAuthStore } from "../store/useAuthStore";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProfile } from "../services/profile.service";
 import { getFilePreview } from "../services/listing.service";
+import { useOnlineUsers, useTypingIndicator } from "../hooks/useChatPresence";
 
 export default function Chat() {
   const { id } = useParams();
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const { data: messages = [] } = useMessages(id);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
+
+  const onlineUsers = useOnlineUsers(!!user);
+  const { isOtherTyping, notifyTyping, stopTyping } = useTypingIndicator(id, user?.$id);
 
   // Fetch the conversation details to find out who we are talking to
   const { data: conversations = [] } = useQuery({
@@ -23,6 +28,7 @@ export default function Chat() {
   });
   const conversation = conversations.find(c => c.$id === id);
   const otherUserId = conversation ? (conversation.user1Id === user.$id ? conversation.user2Id : conversation.user1Id) : null;
+  const isOtherOnline = otherUserId ? onlineUsers.has(otherUserId) : false;
 
   // Fetch the other user's profile
   const { data: profile } = useQuery({
@@ -33,10 +39,21 @@ export default function Chat() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isOtherTyping]);
+
+  useEffect(() => {
+    if (!id || !user) return;
+    markConversationRead(id)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["unread_count"] });
+        queryClient.invalidateQueries({ queryKey: ["conversations", user.$id] });
+      })
+      .catch(() => {});
+  }, [id, user, messages.length, queryClient]);
 
   const handleSend = async () => {
     if (!text.trim() || sending) return;
+    stopTyping();
     setSending(true);
     try {
       await sendMessage(id, user.$id, text);
@@ -79,9 +96,35 @@ export default function Chat() {
             <h2 style={{ margin: 0, fontSize: "1rem" }}>
               {profile?.name ? profile.name : "Roommate"}
             </h2>
-            <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--p)", display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--p)", animation: "pulse 2s infinite" }} />
-              Live
+            <p
+              style={{
+                margin: 0,
+                fontSize: "0.75rem",
+                color: isOtherTyping
+                  ? "var(--p)"
+                  : isOtherOnline
+                    ? "#10b981"
+                    : "var(--tx3)",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                fontWeight: isOtherTyping || isOtherOnline ? 600 : 400,
+              }}
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: isOtherTyping
+                    ? "var(--p)"
+                    : isOtherOnline
+                      ? "#10b981"
+                      : "var(--tx3)",
+                  animation: isOtherTyping || isOtherOnline ? "pulse 2s infinite" : "none",
+                }}
+              />
+              {isOtherTyping ? "typing..." : isOtherOnline ? "Online" : "Offline"}
             </p>
           </div>
         </div>
@@ -114,6 +157,23 @@ export default function Chat() {
               </div>
             );
           })}
+          {isOtherTyping && (
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <div
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "18px 18px 18px 4px",
+                  background: "var(--sur2)",
+                  color: "var(--tx2)",
+                  fontSize: "0.8125rem",
+                  fontStyle: "italic",
+                  boxShadow: "var(--sh1)",
+                }}
+              >
+                typing...
+              </div>
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
 
@@ -127,7 +187,14 @@ export default function Chat() {
             className="inp"
             placeholder="Type a message..."
             value={text}
-            onChange={e => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (e.target.value.trim()) {
+                notifyTyping();
+              } else {
+                stopTyping();
+              }
+            }}
             onKeyDown={handleKeyDown}
             rows={1}
             style={{ flex: 1, resize: "none", lineHeight: 1.5, maxHeight: 120 }}

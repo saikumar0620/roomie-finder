@@ -6,10 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import { getProfile } from "../services/profile.service";
 import { getFilePreview } from "../services/listing.service";
 import { deleteConversation } from "../services/chat.service";
+import { useOnlineUsers } from "../hooks/useChatPresence";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-function ConversationCard({ conversation, otherUserId, index, onDelete }) {
+function ConversationCard({ conversation, otherUserId, isOnline, index, onDelete }) {
   const { data: profile } = useQuery({
     queryKey: ["profile", otherUserId],
     queryFn: () => getProfile(otherUserId),
@@ -33,33 +34,59 @@ function ConversationCard({ conversation, otherUserId, index, onDelete }) {
         position: "relative"
       }}
     >
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            flexShrink: 0,
-            background: `linear-gradient(135deg, var(--p), var(--sec))`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontWeight: 600,
-            backgroundImage: profile?.avatarId ? `url(${getFilePreview(profile?.avatarId)})` : "none",
-            backgroundSize: "cover",
-            backgroundPosition: "center"
-          }}
-        >
-          {!profile?.avatarId && (profile?.bio ? "U" : "💬")}
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: "50%",
+              background: `linear-gradient(135deg, var(--p), var(--sec))`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontWeight: 600,
+              backgroundImage: profile?.avatarId ? `url(${getFilePreview(profile?.avatarId)})` : "none",
+              backgroundSize: "cover",
+              backgroundPosition: "center"
+            }}
+          >
+            {!profile?.avatarId && (profile?.name?.charAt(0).toUpperCase() || "💬")}
+          </div>
+          {isOnline && (
+            <span
+              title="Online"
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                background: "#10b981",
+                border: "2px solid var(--sur)",
+              }}
+            />
+          )}
         </div>
 
-        <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: "1rem", fontWeight: 600, color: "var(--tx)" }}>
-            {profile?.name ? profile.name : "Roommate"}
-          </p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="flex items-center gap-2">
+            <p style={{ margin: 0, fontSize: "1rem", fontWeight: 600, color: "var(--tx)" }}>
+              {profile?.name ? profile.name : "Roommate"}
+            </p>
+            {conversation.unreadCount > 0 && (
+              <span
+                className="text-[11px] font-bold text-white px-2 py-0.5 rounded-full leading-none"
+                style={{ background: "var(--p)" }}
+              >
+                {conversation.unreadCount} new
+              </span>
+            )}
+          </div>
 
-          <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--tx2)" }}>
-            Tap to view conversation
+          <p style={{ margin: 0, fontSize: "0.8125rem", color: isOnline ? "#10b981" : "var(--tx2)" }}>
+            {isOnline ? "Online now • Tap to chat" : "Tap to view conversation"}
           </p>
         </div>
 
@@ -86,6 +113,7 @@ function ConversationCard({ conversation, otherUserId, index, onDelete }) {
 export default function Inbox() {
   const { user } = useAuthStore();
   const { data = [], isLoading, isError, error, refetch } = useConversations(user?.$id);
+  const onlineUsers = useOnlineUsers(!!user);
 
   const [deleteId, setDeleteId] = useState(null);
 
@@ -145,7 +173,16 @@ export default function Inbox() {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {data.map((c, i) => {
           const otherUser = c.user1Id === user.$id ? c.user2Id : c.user1Id;
-          return <ConversationCard key={c.$id} conversation={c} otherUserId={otherUser} index={i} onDelete={handleDeleteClick} />;
+          return (
+            <ConversationCard
+              key={c.$id}
+              conversation={c}
+              otherUserId={otherUser}
+              isOnline={onlineUsers.has(otherUser)}
+              index={i}
+              onDelete={handleDeleteClick}
+            />
+          );
         })}
       </div>
 

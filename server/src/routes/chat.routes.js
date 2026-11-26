@@ -33,6 +33,22 @@ async function assertConversationMember(conversationId, userId) {
 }
 
 router.get(
+  "/unread-count",
+  asyncHandler(async (req, res) => {
+    const unreadCount = await prisma.message.count({
+      where: {
+        isRead: false,
+        senderId: { not: req.user.id },
+        conversation: {
+          OR: [{ user1Id: req.user.id }, { user2Id: req.user.id }],
+        },
+      },
+    });
+    res.json({ unreadCount });
+  })
+);
+
+router.get(
   "/",
   asyncHandler(async (req, res) => {
     const { page, limit, skip } = parsePagination(req.query, {
@@ -46,7 +62,16 @@ router.get(
     const [conversations, total] = await prisma.$transaction([
       prisma.conversation.findMany({
         where,
-        include: { listing: { select: { title: true } } },
+        include: {
+          listing: { select: { title: true } },
+          _count: {
+            select: {
+              messages: {
+                where: { isRead: false, senderId: { not: req.user.id } },
+              },
+            },
+          },
+        },
         orderBy: { updatedAt: "desc" },
         take: limit,
         skip,
@@ -115,6 +140,30 @@ router.delete(
   })
 );
 
+router.post(
+  "/:id/read",
+  asyncHandler(async (req, res) => {
+    const convId = req.params.id;
+    await assertConversationMember(convId, req.user.id);
+
+    await prisma.message.updateMany({
+      where: {
+        conversationId: convId,
+        senderId: { not: req.user.id },
+        isRead: false,
+      },
+      data: { isRead: true },
+    });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`user:${req.user.id}`).emit("unread_updated");
+    }
+
+    res.json({ ok: true });
+  })
+);
+
 router.get(
   "/:id/messages",
   asyncHandler(async (req, res) => {
@@ -149,6 +198,8 @@ router.post(
     const { text } = sendMessageSchema.parse(req.body);
     const convId = req.params.id;
     const conv = await assertConversationMember(convId, req.user.id);
+    const recipientId =
+      conv.user1Id === req.user.id ? conv.user2Id : conv.user1Id;
 
     const [message, updatedConv] = await prisma.$transaction([
       prisma.message.create({
@@ -174,6 +225,7 @@ router.post(
       io.to(`user:${conv.user1Id}`)
         .to(`user:${conv.user2Id}`)
         .emit("conversation_updated", serializedConv);
+      io.to(`user:${recipientId}`).emit("unread_updated");
     }
 
     res.status(201).json({ message: serializedMsg });

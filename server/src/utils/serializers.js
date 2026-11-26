@@ -61,6 +61,7 @@ export const serializeConversation = (row) => ({
   user1Id: row.user1Id,
   user2Id: row.user2Id,
   listingTitle: row.listing?.title ?? null,
+  unreadCount: row._count?.messages ?? 0,
   $createdAt: row.createdAt,
   $updatedAt: row.updatedAt,
 });
@@ -71,6 +72,7 @@ export const serializeMessage = (row) => ({
   conversationId: row.conversationId,
   senderId: row.senderId,
   text: row.text,
+  isRead: row.isRead ?? false,
   $createdAt: row.createdAt,
 });
 

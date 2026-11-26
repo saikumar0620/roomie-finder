@@ -2,10 +2,12 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useThemeStore } from "../store/useThemeStore";
+import { useUnreadCount } from "../hooks/useChatPresence";
 
 export default function Navbar() {
   const { user, loading, logoutUser } = useAuthStore();
   const { darkMode, toggleTheme } = useThemeStore();
+  const unreadCount = useUnreadCount(!!user);
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -71,7 +73,7 @@ export default function Navbar() {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="no-underline text-sm font-medium px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap"
+                  className="no-underline text-sm font-medium px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap inline-flex items-center gap-1.5"
                   style={{
                     background: active ? "var(--sur)" : "transparent",
                     color: active ? "var(--p)" : "var(--tx2)",
@@ -79,6 +81,14 @@ export default function Navbar() {
                   }}
                 >
                   {item.label}
+                  {item.to === "/inbox" && unreadCount > 0 && (
+                    <span
+                      className="text-[11px] font-bold text-white px-1.5 py-0.5 rounded-full leading-none"
+                      style={{ background: "var(--p)" }}
+                    >
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -200,7 +210,7 @@ export default function Navbar() {
                     key={item.to}
                     to={item.to}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="no-underline text-sm font-medium px-3 py-2.5 rounded-xl text-center"
+                    className="no-underline text-sm font-medium px-3 py-2.5 rounded-xl text-center inline-flex items-center justify-center gap-1.5"
                     style={{
                       background: active ? "var(--p-l)" : "var(--sur2)",
                       color: active ? "var(--p)" : "var(--tx)",
@@ -208,6 +218,14 @@ export default function Navbar() {
                     }}
                   >
                     {item.label}
+                    {item.to === "/inbox" && unreadCount > 0 && (
+                      <span
+                        className="text-[11px] font-bold text-white px-1.5 py-0.5 rounded-full leading-none"
+                        style={{ background: "var(--p)" }}
+                      >
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

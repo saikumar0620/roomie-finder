@@ -29,3 +29,13 @@ export const deleteConversation = async (conversationId) => {
   const { data } = await api.delete(`/conversations/${conversationId}`);
   return data;
 };
+
+export const getUnreadCount = async () => {
+  const { data } = await api.get("/conversations/unread-count");
+  return data.unreadCount ?? 0;
+};
+
+export const markConversationRead = async (conversationId) => {
+  const { data } = await api.post(`/conversations/${conversationId}/read`);
+  return data;
+};
