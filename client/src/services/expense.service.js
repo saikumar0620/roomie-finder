@@ -11,6 +11,36 @@ export const createRoom = async (name, memberIds = []) => {
   return data.room;
 };
 
+export const joinRoomByCode = async (inviteCode) => {
+  const { data } = await api.post("/rooms/join", { inviteCode });
+  return data.room;
+};
+
+export const addRoomMemberByEmail = async (roomId, email) => {
+  const { data } = await api.post(`/rooms/${roomId}/members`, { email });
+  return data;
+};
+
+export const getPendingInvites = async () => {
+  const { data } = await api.get("/rooms/invites");
+  return data.invites;
+};
+
+export const respondToInvite = async (inviteId, action) => {
+  const { data } = await api.post(`/rooms/invites/${inviteId}/respond`, { action });
+  return data;
+};
+
+export const acceptInviteByToken = async (token) => {
+  const { data } = await api.post("/rooms/invites/accept-token", { token });
+  return data;
+};
+
+export const removeRoomMember = async (roomId, userId) => {
+  const { data } = await api.delete(`/rooms/${roomId}/members/${userId}`);
+  return data;
+};
+
 export const getRoomDashboard = async (roomId) => {
   const { data } = await api.get(`/rooms/${roomId}/dashboard`);
   return data;

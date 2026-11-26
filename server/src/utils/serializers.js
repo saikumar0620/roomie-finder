@@ -27,6 +27,8 @@ export const serializeListing = (row) => ({
   title: row.title,
   rent: row.rent,
   location: row.location,
+  latitude: row.latitude ?? null,
+  longitude: row.longitude ?? null,
   description: row.description,
   preferences: row.preferences,
   amenities: Array.isArray(row.amenities)

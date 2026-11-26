@@ -20,10 +20,18 @@ const amenitiesField = z
       .filter(Boolean);
   });
 
+const optionalCoord = (min, max) =>
+  z.preprocess(
+    (val) => (val === null || val === undefined || val === "" ? null : val),
+    z.coerce.number().min(min).max(max).nullable().optional()
+  );
+
 const listingCreateSchema = z.object({
   title: z.string().trim().min(1).max(160),
   rent: z.coerce.number().int().min(0),
   location: z.string().trim().min(1).max(200),
+  latitude: optionalCoord(-90, 90),
+  longitude: optionalCoord(-180, 180),
   description: z.string().max(3000).optional().default(""),
   preferences: z.string().max(200).optional().default(""),
   amenities: amenitiesField,
@@ -32,6 +40,17 @@ const listingCreateSchema = z.object({
 });
 
 const listingUpdateSchema = listingCreateSchema.partial();
+
+const reportListingSchema = z.object({
+  reason: z.enum([
+    "Fake or scam listing",
+    "Wrong price or location",
+    "Already rented",
+    "Inappropriate content",
+    "Other",
+  ]),
+  details: z.string().max(500).optional().default(""),
+});
 
 router.get(
   "/",
@@ -131,6 +150,8 @@ router.post(
         title: data.title,
         rent: data.rent,
         location: data.location,
+        latitude: data.latitude ?? null,
+        longitude: data.longitude ?? null,
         description: data.description,
         preferences: data.preferences,
         amenities: data.amenities,
@@ -139,6 +160,42 @@ router.post(
       },
     });
     res.status(201).json({ listing: serializeListing(listing) });
+  })
+);
+
+router.post(
+  "/:id/report",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { reason, details } = reportListingSchema.parse(req.body);
+    const listing = await prisma.listing.findUnique({
+      where: { id: req.params.id },
+      select: { id: true },
+    });
+    if (!listing) {
+      throw new HttpError(404, "Listing not found");
+    }
+
+    const report = await prisma.report.upsert({
+      where: {
+        listingId_reporterId: {
+          listingId: req.params.id,
+          reporterId: req.user.id,
+        },
+      },
+      create: {
+        listingId: req.params.id,
+        reporterId: req.user.id,
+        reason,
+        details,
+      },
+      update: {
+        reason,
+        details,
+      },
+    });
+
+    res.status(201).json({ report });
   })
 );
 

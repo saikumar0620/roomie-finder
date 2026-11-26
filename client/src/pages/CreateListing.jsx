@@ -36,6 +36,7 @@ export default function CreateListing() {
   const queryClient = useQueryClient();
 
   const [form, setForm] = useState({ title: "", rent: "", location: "", description: "", preferences: "" });
+  const [coords, setCoords] = useState({ latitude: null, longitude: null });
   const [isAvailable, setIsAvailable] = useState(true);
   const [amenities, setAmenities] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
@@ -65,6 +66,7 @@ export default function CreateListing() {
     if (isEdit) {
       getListingById(listingId).then(data => {
         setForm({ title: data.title || "", rent: data.rent || "", location: data.location || "", description: data.description || "", preferences: data.preferences || "" });
+        setCoords({ latitude: data.latitude ?? null, longitude: data.longitude ?? null });
         setAmenities(data.amenities ? data.amenities.split(",").map(a => a.trim()) : []);
         setExistingImages(data.images || []);
         if (data.isAvailable !== undefined) setIsAvailable(data.isAvailable);
@@ -115,6 +117,8 @@ export default function CreateListing() {
         title: form.title, 
         rent: Number(form.rent), 
         location: form.location, 
+        latitude: coords.latitude,
+        longitude: coords.longitude,
         userId: user.$id,
         isAvailable,
         images: imageUrls,
@@ -210,6 +214,7 @@ export default function CreateListing() {
               <LocationAutocomplete 
                 value={form.location} 
                 onChange={(val) => setForm(f => ({ ...f, location: val }))} 
+                onCoordsChange={setCoords}
                 placeholder="e.g. Koramangala, Bangalore"
                 showCurrentLocation
               />

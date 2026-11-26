@@ -28,6 +28,9 @@ model User {
   expenses             Expense[]
   expenseShares        ExpenseShare[]
   recurringBills       RecurringBill[]
+  reports              Report[]
+  sentRoomInvites      RoomInvite[]    @relation("RoomInviter")
+  receivedRoomInvites  RoomInvite[]    @relation("RoomInvitee")
 
   @@map("users")
 }
@@ -55,6 +58,8 @@ model Listing {
   title       String
   rent        Int
   location    String
+  latitude    Float?
+  longitude   Float?
   description String   @default("")
   preferences String   @default("")
   amenities   String[] @default([])
@@ -66,6 +71,7 @@ model Listing {
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   favorites     Favorite[]
   conversations Conversation[]
+  reports       Report[]
 
   @@index([isAvailable, createdAt(sort: Desc), id(sort: Desc)], map: "idx_listings_available_created")
   @@index([userId, createdAt(sort: Desc)], map: "idx_listings_user_created")
@@ -122,15 +128,17 @@ model Message {
 }
 
 model Room {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  createdBy String   @map("created_by") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  inviteCode String?  @unique @map("invite_code")
+  createdBy  String   @map("created_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   creator        User            @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   members        RoomMember[]
   expenses       Expense[]
   recurringBills RecurringBill[]
+  invites        RoomInvite[]
 
   @@map("rooms")
 }
@@ -211,4 +219,38 @@ model Session {
   @@index([userId], map: "idx_sessions_user")
   @@index([expiresAt], map: "idx_sessions_expires")
   @@map("sessions")
+}
+
+model Report {
+  id         String   @id @default(uuid()) @db.Uuid
+  listingId  String   @map("listing_id") @db.Uuid
+  reporterId String   @map("reporter_id") @db.Uuid
+  reason     String
+  details    String   @default("")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reporter User    @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, reporterId])
+  @@index([listingId], map: "idx_reports_listing")
+  @@map("reports")
+}
+
+model RoomInvite {
+  id        String   @id @default(uuid()) @db.Uuid
+  roomId    String   @map("room_id") @db.Uuid
+  inviterId String   @map("inviter_id") @db.Uuid
+  inviteeId String   @map("invitee_id") @db.Uuid
+  token     String?  @unique
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  room    Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  inviter User @relation("RoomInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee User @relation("RoomInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, inviteeId])
+  @@index([inviteeId, status], map: "idx_room_invites_invitee_status")
+  @@map("room_invites")
 }

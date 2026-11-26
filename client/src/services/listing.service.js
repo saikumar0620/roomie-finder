@@ -53,6 +53,11 @@ export const getListingById = async (id) => {
   return data.listing;
 };
 
+export const reportListing = async (id, reason, details = "") => {
+  const { data } = await api.post(`/listings/${id}/report`, { reason, details });
+  return data.report;
+};
+
 export const getListings = async ({ pageParam = 1, filters = {} }) => {
   const params = {
     page: pageParam || 1,

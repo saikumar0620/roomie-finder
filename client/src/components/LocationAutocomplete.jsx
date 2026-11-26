@@ -5,6 +5,7 @@ import MapLocationPicker, { reverseGeocode } from "./MapLocationPicker";
 export default function LocationAutocomplete({
   value,
   onChange,
+  onCoordsChange,
   placeholder = "e.g. Bangalore",
   showCurrentLocation = false,
 }) {
@@ -77,7 +78,9 @@ export default function LocationAutocomplete({
     }
 
     if (suggestion.lat && suggestion.lon) {
-      setPinnedCoords([Number(suggestion.lat), Number(suggestion.lon)]);
+      const next = [Number(suggestion.lat), Number(suggestion.lon)];
+      setPinnedCoords(next);
+      onCoordsChange?.({ latitude: next[0], longitude: next[1] });
     }
 
     onChange(displayName);
@@ -95,6 +98,10 @@ export default function LocationAutocomplete({
       async ({ coords }) => {
         try {
           setPinnedCoords([coords.latitude, coords.longitude]);
+          onCoordsChange?.({
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          });
           const formatted = await reverseGeocode(coords.latitude, coords.longitude);
           if (!formatted) {
             toast.error("Could not determine address from your location");
@@ -167,6 +174,7 @@ export default function LocationAutocomplete({
           initialCoords={pinnedCoords}
           onSelectAddress={(addr, { lat, lng }) => {
             setPinnedCoords([lat, lng]);
+            onCoordsChange?.({ latitude: lat, longitude: lng });
             onChange(addr);
           }}
           onClose={() => setShowMap(false)}

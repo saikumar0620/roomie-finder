@@ -91,19 +91,44 @@ export default function RecurringBills({ roomId, bills: billsProp }) {
         {bills.length === 0 ? (
           <p className="text-center text-[var(--tx3)] text-sm py-4">No recurring bills set up.</p>
         ) : (
-          bills.map(bill => (
-            <div key={bill.$id} className="flex items-center justify-between p-3 rounded-xl hover:bg-[var(--sur2)] transition-colors border border-transparent hover:border-[var(--bdr)]">
-              <div>
-                <h4 className="font-medium text-sm text-[var(--tx)]">{bill.description}</h4>
-                <p className="text-xs text-[var(--tx3)] mt-1">
-                  Due: <span className="font-medium text-[var(--tx2)]">{new Date(bill.due_date).toLocaleDateString()}</span> • {bill.interval}
-                </p>
+          bills.map(bill => {
+            const diffDays = Math.ceil(
+              (new Date(bill.due_date).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) /
+                (1000 * 60 * 60 * 24)
+            );
+            const badge =
+              diffDays < 0
+                ? { text: 'Overdue', bg: 'rgba(225,29,72,0.12)', color: 'var(--p)' }
+                : diffDays === 0
+                  ? { text: 'Due Today', bg: 'rgba(245,158,11,0.15)', color: '#d97706' }
+                  : diffDays <= 3
+                    ? { text: `Due in ${diffDays}d`, bg: 'rgba(245,158,11,0.15)', color: '#d97706' }
+                    : null;
+
+            return (
+              <div key={bill.$id} className="flex items-center justify-between p-3 rounded-xl hover:bg-[var(--sur2)] transition-colors border border-transparent hover:border-[var(--bdr)]">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-medium text-sm text-[var(--tx)]">{bill.description}</h4>
+                    {badge && (
+                      <span
+                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{ background: badge.bg, color: badge.color }}
+                      >
+                        {badge.text}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-[var(--tx3)] mt-1">
+                    Due: <span className="font-medium text-[var(--tx2)]">{new Date(bill.due_date).toLocaleDateString()}</span> • {bill.interval}
+                  </p>
+                </div>
+                <div className="font-bold text-[var(--tx)]">
+                  ₹{bill.amount.toFixed(2)}
+                </div>
               </div>
-              <div className="font-bold text-[var(--tx)]">
-                ₹{bill.amount.toFixed(2)}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

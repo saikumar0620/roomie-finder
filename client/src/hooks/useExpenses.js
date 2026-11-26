@@ -86,6 +86,78 @@ export const useCreateRoom = () => {
   });
 };
 
+export const useJoinRoom = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (inviteCode) => expenseService.joinRoomByCode(inviteCode),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      toast.success('Joined room!');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Invalid invite code.');
+    },
+  });
+};
+
+export const useAddRoomMember = (roomId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (email) => expenseService.addRoomMemberByEmail(roomId, email),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['room_dashboard', roomId] });
+      toast.success(res?.message || 'Invitation sent!');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to send invite.');
+    },
+  });
+};
+
+export const usePendingInvites = (enabled = true) => {
+  return useQuery({
+    queryKey: ['room_invites'],
+    queryFn: expenseService.getPendingInvites,
+    enabled,
+    staleTime: 1000 * 30,
+    retry: smartRetry,
+  });
+};
+
+export const useRespondToInvite = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ inviteId, action }) => expenseService.respondToInvite(inviteId, action),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['room_invites'] });
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      toast.success(res.status === 'accepted' ? 'Joined room!' : 'Invite declined');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to respond to invite.');
+    },
+  });
+};
+
+export const useRemoveRoomMember = (roomId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId) => expenseService.removeRoomMember(roomId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['room_dashboard', roomId] });
+      toast.success('Updated room members');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to update members.');
+    },
+  });
+};
+
 export const useCreateExpense = (roomId) => {
   const queryClient = useQueryClient();
 
