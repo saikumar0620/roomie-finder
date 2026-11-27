@@ -283,4 +283,16 @@ router.post(
   })
 );
 
+router.delete(
+  "/me",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    await prisma.user.delete({
+      where: { id: req.user.id },
+    });
+    res.clearCookie("token");
+    res.json({ ok: true, message: "Account deleted successfully." });
+  })
+);
+
 export default router;

@@ -53,3 +53,13 @@ export const verifyEmailCode = async (code) => {
   const { data } = await api.post("/auth/verify-email", { code });
   return data.user;
 };
+
+export const deleteAccount = async () => {
+  try {
+    const { data } = await api.delete("/auth/me");
+    return data;
+  } finally {
+    setAuthToken(null);
+    disconnectSocket();
+  }
+};

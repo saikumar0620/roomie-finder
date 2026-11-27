@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getCurrentUser, login, logout, signup } from "../services/auth.service";
+import { deleteAccount, getCurrentUser, login, logout, signup } from "../services/auth.service";
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -29,6 +29,11 @@ export const useAuthStore = create((set) => ({
 
   logoutUser: async () => {
     await logout();
+    set({ user: null });
+  },
+
+  deleteUserAccount: async () => {
+    await deleteAccount();
     set({ user: null });
   },
 

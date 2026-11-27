@@ -5,14 +5,15 @@ import { useFavoriteListings } from "../hooks/useFavoriteListings";
 import { useFavorites } from "../hooks/useFavorites";
 import { deleteListing } from "../services/listing.service";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { getProfile } from "../services/profile.service";
 import { getFilePreview } from "../services/listing.service";
 import { sendVerificationCode, verifyEmailCode } from "../services/auth.service";
 
 export default function Profile() {
-  const { user, checkAuth } = useAuthStore();
+  const { user, checkAuth, deleteUserAccount } = useAuthStore();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: listings = [], refetch } = useUserListings();
   const { data: favoriteListings = [] } = useFavoriteListings();
@@ -20,6 +21,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("listings");
   const [loadingId, setLoadingId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [verifying, setVerifying] = useState(false);
@@ -81,7 +84,23 @@ export default function Profile() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      await deleteUserAccount();
+      queryClient.clear();
+      toast.success("Your account has been deleted.");
+      navigate("/signup", { replace: true });
+    } catch (err) {
+      toast.error(err?.message || "Failed to delete account");
+    } finally {
+      setDeletingAccount(false);
+      setShowDeleteAccount(false);
+    }
+  };
+
   return (
+    <>
     <div className="wrap fade-up pt-8 pb-14 sm:pt-12 sm:pb-16">
       {/* Profile card */}
       <div
@@ -377,6 +396,85 @@ export default function Profile() {
           </div>
         </div>
       )}
+      {/* Danger Zone */}
+      <div
+        className="mt-10 p-5 sm:p-6 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        style={{
+          background: "var(--sur)",
+          borderColor: "rgba(225,29,72,0.22)",
+        }}
+      >
+        <div>
+          <h3 className="text-base font-bold m-0 mb-1" style={{ color: "var(--p)" }}>
+            Delete Account
+          </h3>
+          <p className="text-xs sm:text-sm m-0" style={{ color: "var(--tx2)" }}>
+            Permanently delete your profile, listings, messages, and all account data.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowDeleteAccount(true)}
+          className="btn text-sm px-4 py-2.5 shrink-0 justify-center"
+          style={{
+            background: "rgba(225,29,72,0.1)",
+            color: "var(--p)",
+            border: "1px solid rgba(225,29,72,0.3)",
+          }}
+        >
+          🗑️ Delete My Account
+        </button>
+      </div>
     </div>
+
+      {showDeleteAccount && (
+        <div
+          onClick={() => !deletingAccount && setShowDeleteAccount(false)}
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
+          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="fade-up w-full sm:w-[420px] rounded-t-3xl sm:rounded-2xl text-center px-6 pt-3 sm:pt-8"
+            style={{
+              background: "var(--sur)",
+              border: "1px solid var(--bdr)",
+              boxShadow: "var(--sh3)",
+              paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))",
+            }}
+          >
+            <div
+              className="sm:hidden w-10 h-1 rounded-full mx-auto mb-5"
+              style={{ background: "var(--bdr)" }}
+            />
+            <div style={{ fontSize: 44, marginBottom: 12 }}>⚠️</div>
+            <h2 style={{ fontSize: "1.25rem", margin: "0 0 8px", color: "var(--tx)" }}>
+              Delete Your Account?
+            </h2>
+            <p style={{ color: "var(--tx2)", fontSize: "0.875rem", marginBottom: 22 }}>
+              This permanently removes your profile, room listings, and chat history. This action cannot be undone.
+            </p>
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 justify-center">
+              <button
+                type="button"
+                className="btn btn-o w-full sm:w-auto justify-center py-3 sm:py-2.5 px-6"
+                disabled={deletingAccount}
+                onClick={() => setShowDeleteAccount(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-p w-full sm:w-auto justify-center py-3 sm:py-2.5 px-6"
+                disabled={deletingAccount}
+                onClick={handleDeleteAccount}
+              >
+                {deletingAccount ? "Deleting..." : "Yes, Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
