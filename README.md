@@ -4,7 +4,7 @@ A full-stack platform to discover nearby rooms, match with compatible roommates,
 
 ## Key Features
 
-- **Room Discovery & GPS Nearby Search**: Filter rooms by rent, location, preferences, amenities, and **Rooms Near Me** (`2 km`, `5 km`, `10 km` Haversine radius sorted nearest first) with interactive Leaflet map location picking.
+- **Room Discovery & GPS Nearby Search**: Filter rooms by quick price range presets (`Under ₹8k`, `₹8k–₹15k`, `₹15k–₹25k`, `₹25k+`), rent bounds (`minRent <= maxRent` validated), location, preferences, amenities, and **Rooms Near Me** (`2 km`, `5 km`, `10 km` Haversine radius sorted nearest first) with interactive Leaflet map location picking.
 - **Roommate Matching**: Browse roommate seekers with a habit-based **Compatibility Score (`% Match`)** and one-tap chat.
 - **Trust & Safety Signals**:
   - **Account Verification (`✓ Verified`)**: 6-digit email OTP verification from the user's Profile.
@@ -13,15 +13,15 @@ A full-stack platform to discover nearby rooms, match with compatible roommates,
 - **Real-Time Chat & Inbox**: Socket.IO powered messaging with live **Online** status, **Typing...** indicators, and live **Unread** count badges in navigation.
 - **Schedule a Room Visit**: Request a date/time directly from a listing page — automatically creates a `VisitRequest`, posts into the owner-renter chat thread, and emails the owner.
 - **Shared Expense Rooms & Chores**:
-  - Create rooms, invite members via email links, split bills (`equal`, `exact`, `percentage`), and send personalized email notifications to roommates.
+  - Create rooms, invite members via email links (preserved across login redirects), split bills (`equal`, `exact`, `percentage`), send personalized email notifications to roommates, and delete expenses once all shares are settled.
   - **1-Tap UPI Settlement**: Pay roommates via `upi://pay` deep link or scannable QR code using their saved UPI ID.
   - **Shared Chore Board**: Track, toggle, and delete room chores inside each expense room.
-- **Auth & Account Security**: Session-backed JWT auth (HTTP-only cookies + Bearer), **Forgot / Reset Password** (15-minute SHA-256 hashed email link), and session revocation on reset.
+- **Auth & Account Security**: Session-backed JWT auth (HTTP-only cookies + Bearer), **Forgot / Reset Password** (15-minute SHA-256 hashed email link), session revocation on reset, and **Self-Delete Account** from Profile.
 - **Mobile-First UX & Code Splitting**: Thumb-zone mobile bottom navigation bar, bottom-sheet confirmations, progressive filter disclosure, `React.lazy` route splitting, and Vite vendor chunking.
 
 ## Tech Stack
 
-- **Frontend (`client/`)**: React 19, Vite 8 (Rolldown), React Router 7, TanStack React Query, Zustand, Axios, Socket.IO Client, Leaflet, `qrcode`, Tailwind CSS v4
+- **Frontend (`client/`)**: React 19, Vite 8 (Rolldown), React Router 7, TanStack React Query, Zustand, Axios, Socket.IO Client, Leaflet, Tailwind CSS v4
 - **Backend (`server/`)**: Node.js, Express, Socket.IO, JWT + Neon `Session` tracking, Multer, Zod, Brevo HTTPS API / Nodemailer SMTP
 - **Database**: Neon (Lakebase PostgreSQL) + Prisma ORM (`roomie_finder` schema)
 

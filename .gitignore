@@ -10,7 +10,13 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.vite
+coverage
 *.local
+
+# Uploaded media
+uploads/
+server/uploads/
 
 # Editor directories and files
 .vscode/*
