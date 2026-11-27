@@ -187,14 +187,21 @@ router.post(
     const { token } = acceptTokenSchema.parse(req.body);
     const invite = await prisma.roomInvite.findUnique({
       where: { token },
-      include: { room: { select: { id: true, name: true } } },
+      include: {
+        room: { select: { id: true, name: true } },
+        invitee: { select: { email: true } },
+      },
     });
 
     if (!invite) {
       throw new HttpError(404, "Invalid or expired invite link");
     }
     if (invite.inviteeId !== req.user.id) {
-      throw new HttpError(403, "This invite link belongs to a different user account");
+      const msg =
+        invite.inviterId === req.user.id
+          ? `You sent this invite to ${invite.invitee.email}. Sign in as ${invite.invitee.email} to accept it.`
+          : `This invite was sent to ${invite.invitee.email}, but you are signed in as ${req.user.email}. Please sign in with ${invite.invitee.email}.`;
+      throw new HttpError(403, msg);
     }
 
     await prisma.$transaction([

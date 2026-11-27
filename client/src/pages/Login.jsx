@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
 export default function Login() {
@@ -9,6 +9,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const loginUser = useAuthStore(s => s.loginUser);
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.from || "/";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -16,7 +18,7 @@ export default function Login() {
     try {
       await loginUser(email, password);
       toast.success("Welcome back!");
-      navigate("/");
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       toast.error(err.message || "Login failed");
     } finally {

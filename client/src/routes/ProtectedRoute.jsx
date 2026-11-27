@@ -1,8 +1,9 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuthStore();
+  const location = useLocation();
 
   if (loading) return (
     <div style={{ height: "calc(100vh - 60px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -11,7 +12,15 @@ export default function ProtectedRoute({ children }) {
     </div>
   );
 
-  if (!user) return <Navigate to="/login" />;
+  if (!user) {
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: `${location.pathname}${location.search}` }}
+        replace
+      />
+    );
+  }
 
   return children;
 }
