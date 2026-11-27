@@ -65,6 +65,14 @@ router.get(
       maxLimit: 50,
     });
 
+    if (
+      req.query.minRent &&
+      req.query.maxRent &&
+      Number(req.query.minRent) > Number(req.query.maxRent)
+    ) {
+      throw new HttpError(400, "minRent cannot be greater than maxRent");
+    }
+
     const hasLat = req.query.lat !== undefined && req.query.lat !== "";
     const hasLng = req.query.lng !== undefined && req.query.lng !== "";
 

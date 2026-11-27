@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import LocationAutocomplete from "./LocationAutocomplete";
 
 const AMENITIES_LIST = [
@@ -70,6 +71,10 @@ export default function Filters({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (minRent !== "" && maxRent !== "" && Number(minRent) > Number(maxRent)) {
+      toast.error("Min rent cannot be greater than max rent");
+      return;
+    }
     onApply({
       minRent,
       maxRent,
@@ -218,6 +223,7 @@ export default function Filters({
           <label className="lbl">Min Rent (₹)</label>
           <input
             type="number"
+            min={0}
             placeholder="0"
             className="inp"
             value={minRent}
@@ -229,6 +235,7 @@ export default function Filters({
           <label className="lbl">Max Rent (₹)</label>
           <input
             type="number"
+            min={0}
             placeholder="Any"
             className="inp"
             value={maxRent}
