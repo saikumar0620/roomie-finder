@@ -526,6 +526,32 @@ router.patch(
   })
 );
 
+router.delete(
+  "/expenses/:expenseId",
+  asyncHandler(async (req, res) => {
+    const expense = await prisma.expense.findUnique({
+      where: { id: req.params.expenseId },
+      include: { shares: { select: { isPaid: true } } },
+    });
+    if (!expense) {
+      throw new HttpError(404, "Expense not found");
+    }
+    await assertRoomMember(expense.roomId, req.user.id);
+
+    const allSettled =
+      expense.shares.length > 0 && expense.shares.every((s) => s.isPaid);
+    if (!allSettled) {
+      throw new HttpError(
+        400,
+        "Settle all shares before deleting this expense"
+      );
+    }
+
+    await prisma.expense.delete({ where: { id: req.params.expenseId } });
+    res.json({ ok: true });
+  })
+);
+
 router.get(
   "/rooms/:roomId/recurring-bills",
   asyncHandler(async (req, res) => {

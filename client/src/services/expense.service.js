@@ -60,6 +60,11 @@ export const getExpensesByRoom = async (roomId) => {
   return data.expenses;
 };
 
+export const deleteExpense = async (expenseId) => {
+  const { data } = await api.delete(`/expenses/${expenseId}`);
+  return data;
+};
+
 // --- EXPENSE SHARES ---
 export const getExpenseSharesByRoom = async (roomId) => {
   const { data } = await api.get(`/rooms/${roomId}/expense-shares`);

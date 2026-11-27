@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuthStore } from '../../../store/useAuthStore';
-import { useUpdateShareStatus } from '../../../hooks/useExpenses';
+import { useUpdateShareStatus, useDeleteExpense } from '../../../hooks/useExpenses';
 import clsx from 'clsx';
-import toast from 'react-hot-toast';
 
 export default function ExpenseList({ roomId, expenses, shares, members }) {
   const { user } = useAuthStore();
   const updateStatusMutation = useUpdateShareStatus(roomId);
+  const deleteExpenseMutation = useDeleteExpense(roomId);
+  const [deletingId, setDeletingId] = useState(null);
 
   const getMember = (id) => members.find(m => m.$id === id) || { name: 'Unknown' };
 
@@ -15,6 +16,17 @@ export default function ExpenseList({ roomId, expenses, shares, members }) {
       await updateStatusMutation.mutateAsync({ shareId, is_paid: !currentStatus });
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId) => {
+    setDeletingId(expenseId);
+    try {
+      await deleteExpenseMutation.mutateAsync(expenseId);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -43,6 +55,8 @@ export default function ExpenseList({ roomId, expenses, shares, members }) {
 
           const totalPaid = expenseShares.reduce((sum, s) => s.is_paid ? sum + parseFloat(s.share_amount) : sum, 0);
           const progress = (totalPaid / expense.amount) * 100;
+          const allSettled =
+            expenseShares.length > 0 && expenseShares.every((s) => s.is_paid);
 
           return (
             <div key={expense.$id} className="group flex flex-col bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-md">
@@ -66,8 +80,26 @@ export default function ExpenseList({ roomId, expenses, shares, members }) {
                 
                 <div className="text-right flex flex-col items-end">
                   <div className="font-bold text-lg text-[var(--tx)] tracking-tight">₹{expense.amount.toFixed(2)}</div>
-                  <div className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 mt-1 rounded text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400">
-                    {expense.split_method.replace('_', ' ')}
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400">
+                      {expense.split_method.replace('_', ' ')}
+                    </span>
+                    {allSettled && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteExpense(expense.$id)}
+                        disabled={deletingId === expense.$id}
+                        className="text-xs font-semibold px-2.5 py-0.5 rounded-md border cursor-pointer transition-colors"
+                        style={{
+                          background: "var(--p-l)",
+                          color: "var(--p)",
+                          borderColor: "var(--p)",
+                        }}
+                        title="All shares settled — delete this expense"
+                      >
+                        {deletingId === expense.$id ? "Deleting..." : "🗑️ Delete"}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

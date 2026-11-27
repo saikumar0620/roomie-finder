@@ -198,6 +198,23 @@ export const useUpdateShareStatus = (roomId) => {
   });
 };
 
+export const useDeleteExpense = (roomId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (expenseId) => expenseService.deleteExpense(expenseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['room_dashboard', roomId] });
+      queryClient.invalidateQueries({ queryKey: ['expenses', roomId] });
+      queryClient.invalidateQueries({ queryKey: ['expense_shares', roomId] });
+      toast.success('Expense deleted');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to delete expense.');
+    },
+  });
+};
+
 export const useCreateRecurringBill = (roomId) => {
   const queryClient = useQueryClient();
 
